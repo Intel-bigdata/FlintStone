@@ -39,15 +39,15 @@ class CalciteDialect extends ParserDialect with Logging {
   @transient protected val sqlParser = new SqlParser
 
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
-    val planner = Frameworks.newConfigBuilder().build()
+    val config = Frameworks.newConfigBuilder().build()
     val tree: Option[SqlNode] =
-      Try(Some(Frameworks.getPlanner(planner).parse(sqlText))).getOrElse(None)
+      Try(Some(Frameworks.getPlanner(config).parse(sqlText))).getOrElse(None)
     if (tree.isEmpty) {
       log.warn("failed with Calcite parser.")
       None
     } else {
       log.info("Calcite parsing passed, start to transform.")
-      Try(Some(CatalystTransformer.sqlNodeToPlan(tree.get))).getOrElse(None)
+      Try(Some(calSqlWorker.nodeToPlan(tree.get))).getOrElse(None)
     }
   }
 }
