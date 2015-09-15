@@ -40,15 +40,15 @@ class CalciteDialect extends ParserDialect with Logging {
   @transient protected val hqlParser = new HiveQlDialectParser
 
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
-    val planner = Frameworks.newConfigBuilder().build()
+    val config = Frameworks.newConfigBuilder().build()
     val tree: Option[SqlNode] =
-      Try(Some(Frameworks.getPlanner(planner).parse(sqlText))).getOrElse(None)
+      Try(Some(Frameworks.getPlanner(config).parse(sqlText))).getOrElse(None)
     if (tree.isEmpty) {
       log.warn("Failed with Calcite parser, falling back")
       Some(hqlParser.parse(sqlText))
     } else {
       log.info("Calcite parsing passed, start to transform.")
-      Try(Some(CatalystTransformer.sqlNodeToPlan(tree.get))).getOrElse(None)
+      Try(Some(calSqlWorker.nodeToPlan(tree.get))).getOrElse(None)
     }
   }
 }
