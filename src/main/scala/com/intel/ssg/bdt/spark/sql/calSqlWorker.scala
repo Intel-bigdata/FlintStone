@@ -348,7 +348,7 @@ class calSqlWorker(sqlNode: SqlNode){
                         //count(*), count(a), count(distinct a, b)
                         if (basicCallNode.getFunctionQuantifier == null){
                             val distinctExpr = operand.get(0).asInstanceOf[SqlIdentifier]
-                            if (distinctExpr.isStar)
+                            if (distinctExpr.isStar && distinctExpr.names.size() == 1)
                                 Count(Literal(1))
                             else
                                 Count(nodeToExpr(distinctExpr))
