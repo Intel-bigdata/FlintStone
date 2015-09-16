@@ -15,9 +15,13 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 
 //support select and insert both
-class calSqlWorker(input: String){
-    val calparser: calParser = new calParser()
-    val sqlNode: SqlNode = calparser.getSqlNode(input)
+class calSqlWorker(sqlNode: SqlNode){
+    //val calparser: calParser = new calParser()
+    //val sqlNode: SqlNode = calparser.getSqlNode(input)
+
+    def getLogicalPlan(): LogicalPlan = {
+        nodeToPlan(sqlNode)
+    }
 
     def nodeToPlan(subSqlNode: SqlNode) : LogicalPlan = {
         val sqlKindName = subSqlNode.getKind.name()
