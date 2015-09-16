@@ -46,7 +46,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.useIncrementalCompilation>false</maven.compiler.useIncrementalCompilation>
     <maven.repo.local>${user.home}/.m2/repository</maven.repo.local>
-    <basedir>.</basedir>
+    <basedir>./</basedir>
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
     <spark.version>1.5.0</spark.version>
@@ -215,7 +215,7 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
-        <version>2.15</version>
+        <version>2.15.2</version>
         <executions>
           <execution>
             <goals>
@@ -268,6 +268,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>2.3</version>
         <executions>
           <execution>
             <id>prepare-test-jar</id>
