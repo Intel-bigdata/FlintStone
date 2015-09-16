@@ -21,6 +21,7 @@ import org.apache.calcite.tools.Frameworks
 import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.{SqlParser, ParserDialect}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import parser.calSqlWorker
 
 import scala.util.Try
 
@@ -47,7 +48,8 @@ class CalciteDialect extends ParserDialect with Logging {
       None
     } else {
       log.info("Calcite parsing passed, start to transform.")
-      Try(Some(calSqlWorker.nodeToPlan(tree.get))).getOrElse(None)
+      val worker: calSqlWorker = new calSqlWorker(tree.get)
+      Try(Some(worker.getLogicalPlan())).getOrElse(None)
     }
   }
 }
