@@ -32,6 +32,7 @@ class CalciteDialect extends ParserDialect with Logging {
       if (CalciteConf.strictMode) {
         sys.error("Parse failed.")
       } else {
+        log.info("Using origin parser.")
         sqlParser.parse(sqlText)
       }
     })
