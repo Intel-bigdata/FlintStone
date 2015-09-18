@@ -29,13 +29,13 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
   override def beforeAll() = {
     sqlContext.setConf("spark.sql.dialect", classOf[CalciteDialect].getCanonicalName)
     val df100 = sqlContext.createDataFrame(sc.parallelize(
-      (1 to 100).map(i => (i, i.toString))))
+      (0 until 100).map(i => (i, i.toString))))
     df100.registerTempTable("testData100")
     val df = sqlContext.createDataFrame(Seq((1, 2)))
     df.registerTempTable("testData")
   }
 
   test("select") {
-    assert(sqlContext.sql("SELECT _1 from testData").collect() === Array(Row(1)))
+    checkAnswer(sqlContext.sql("SELECT _1 from testData"), Array(Row(1)))
   }
 }
