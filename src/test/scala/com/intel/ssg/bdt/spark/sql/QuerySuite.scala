@@ -57,6 +57,12 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
   }
 
   test("select") {
+    //val custNames = sqlContext.sql("SELECT city FROM customers where name = 'John'")
+    // SQL查询的返回结果为DataFrame对象，支持所有通用的RDD操作。
+    // 可以按照顺序访问结果行的各个列。
+    //custNames.map(t => "city: " + t(0)).collect().foreach(println)
+
+    //select from
     checkAnswer(sqlContext.sql("SELECT _1 from testData"), Array(Row(1)))
     //val custNames = sqlContext.sql("SELECT city FROM customers where name = 'John'")
     // SQL查询的返回结果为DataFrame对象，支持所有通用的RDD操作。
@@ -75,6 +81,13 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     //select from where group by
     checkAnswer(sqlContext.sql("SELECT sum(sal) from customers group by city"), Array(Row(1200.0), Row(200.0), Row(300.0), Row(400.0)))
 
+    //select order by desc/asc
+    checkAnswer(sqlContext.sql("SELECT sal from customers order by sal asc"), Array(Row("100"), Row("200"), Row("300"), Row("400"), Row("500"), Row("600")))
+    checkAnswer(sqlContext.sql("SELECT sal from customers order by sal desc"), Array(Row("600"), Row("500"), Row("400"), Row("300"), Row("200"), Row("100")))
+
+    //select from where group by
+    checkAnswer(sqlContext.sql("SELECT sum(sal) from customers group by city order by city desc"), Array(Row(400.0), Row(300.0), Row(200.0), Row(1200.0)))
+
     //select from where group by having
     checkAnswer(sqlContext.sql("SELECT sum(sal) from customers group by city having sum(sal) > 1000"), Row(1200.0))
 
@@ -91,6 +104,7 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     checkAnswer(sqlContext.sql("SELECT sal from customers where name = 'John' or city = 'Austin'"), Array(Row("100"), Row("500"), Row("600")))
 
     //like
+    checkAnswer(sqlContext.sql("SELECT sal from customers where name like 'J%'"), Array(Row("100"), Row("200"), Row("500")))
 
     //select from in/between
     checkAnswer(sqlContext.sql("SELECT sal from customers where name in ('John', 'James')"), Array(Row("100"), Row("500")))
@@ -129,5 +143,7 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
 
     //select lower
     checkAnswer(sqlContext.sql("SELECT lower(state) from customers where name = 'kobe'"), Array(Row("tx")))
+
+    //select
   }
 }
