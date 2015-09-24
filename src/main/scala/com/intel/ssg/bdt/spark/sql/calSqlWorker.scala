@@ -83,17 +83,6 @@ class calSqlWorker(sqlNode: SqlNode){
 
       case IDENTIFIER =>
         val identiNode = subSqlNode.asInstanceOf[SqlIdentifier]
-
-//        val ident =
-//          if (identiNode.isSimple)
-//            identiNode.getSimple
-//          else
-//            //identiNode.names.mkString(",")
-//            identiNode.names
-
-        //val identSeq = List(ident)
-
-        //UnresolvedRelation(ident, None)
         UnresolvedRelation(identiNode.names, None)
 
       case INSERT =>
@@ -369,17 +358,24 @@ class calSqlWorker(sqlNode: SqlNode){
             Lower(nodeToExpr(operand.get(0)))
 
           case IF =>
-            If(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), nodeToExpr(operand.get(2)))
+            if (operand.size() == 3)
+              If(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), nodeToExpr(operand.get(2)))
+            else
+              sys.error("YOUR INPUT IS INVALID, PLEASE CHECK.")
 
           case SUBSTR | SUBSTRING =>
             if (operand.size() == 2)
               Substring(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), Literal(Integer.MAX_VALUE))
-            else
+            else if(operand.size() == 3)
               Substring(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), nodeToExpr(operand.get(2)))
+            else
+              sys.error("YOUR INPUT IS INVALID, PLEASE CHECK.")
 
           case COALESCE =>
-            var coalSeq = operand.map(nodeToExpr)
-            Coalesce(coalSeq)
+            if (operand.size() > 0)
+              Coalesce(operand.map(nodeToExpr))
+            else
+              sys.error("YOUR INPUT IS NOT SUITABLE, PLEASE CHECK.")
 
           case SQRT =>
             Sqrt(nodeToExpr(operand.get(0)))
@@ -388,8 +384,8 @@ class calSqlWorker(sqlNode: SqlNode){
             Abs(nodeToExpr(operand.get(0)))
 
           case _ =>
-            var paraSeq = operand.map(nodeToExpr)
-            UnresolvedFunction(operator.getName, paraSeq)
+            println("user-defined function.")
+            UnresolvedFunction(operator.getName, operand.map(nodeToExpr))
           /*case ROW_TYPE =>
               nodeToLiteral()*/
         }

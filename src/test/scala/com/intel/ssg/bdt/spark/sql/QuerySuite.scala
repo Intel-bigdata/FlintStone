@@ -18,7 +18,7 @@ package com.intel.ssg.bdt.spark.sql
 
 import org.apache.spark.sql.types._
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.{Row, SQLContext, QueryTest}
+import org.apache.spark.sql.{SaveMode, Row, SQLContext, QueryTest}
 import org.scalatest.BeforeAndAfterAll
 
 class QuerySuite extends QueryTest with BeforeAndAfterAll {
@@ -53,7 +53,18 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     val dfEmps = sqlContext.createDataFrame(rowRDDEmp, schemaEmp)
 
     // 将DataFrame注册为表
+    //dfEmps.write.mode(SaveMode.Overwrite).option("path"->).saveAsTable("emps")
     dfEmps.registerTempTable("emps")
+
+    val rddEmps2 = sc.textFile("C:\\Users\\zhangc1\\SparkCal\\spark-calcite-parser\\src\\test\\emp2.txt")
+    val schemaStringEmp2 = "id name type.t"
+    val schemaEmp2 = StructType(schemaStringEmp2.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+    val rowRDDEmp2 = rddEmps2.map(_.split(",")).map(p => Row(p(0).trim,p(1).trim,p(2).trim))
+    // 将模式应用于RDD对象。
+    val dfEmps2 = sqlContext.createDataFrame(rowRDDEmp2, schemaEmp2)
+
+    // 将DataFrame注册为表
+    dfEmps2.registerTempTable("emps2")
   }
 
   test("select") {
@@ -106,8 +117,12 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     //like
     checkAnswer(sqlContext.sql("SELECT sal from customers where name like 'J%'"), Array(Row("100"), Row("200"), Row("500")))
 
-    //select from in/between
+    //select from in/between(between include Borders)
     checkAnswer(sqlContext.sql("SELECT sal from customers where name in ('John', 'James')"), Array(Row("100"), Row("500")))
+    checkAnswer(sqlContext.sql("SELECT sal from customers where name between 'Andy' and 'James'"), Array(Row("400"), Row("300"), Row("500")))
+    //select from not in/between
+    checkAnswer(sqlContext.sql("SELECT sal from customers where name not in ('John', 'James')"), Array(Row("200"), Row("300"), Row("400"), Row("600")))
+    checkAnswer(sqlContext.sql("SELECT sal from customers where name not between 'Andy' and 'James'"), Array(Row("100"), Row("200"), Row("600")))
 
     //select from as(prjection)
     checkAnswer(sqlContext.sql("SELECT sal as s, city as c from customers"), Array(Row("100", "Austin"),Row("200", "Dallas"),Row("300", "Houston"),Row("400", "San Antonio"), Row("500", "Austin"), Row("600", "Austin")))
@@ -138,12 +153,79 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     //select min
     checkAnswer(sqlContext.sql("SELECT min(sal) from customers"), Array(Row("100")))
 
+    //select >
+    checkAnswer(sqlContext.sql("SELECT sal from customers where sal > 400"), Array(Row("500"), Row("600")))
+
+    //select >=
+    checkAnswer(sqlContext.sql("SELECT sal from customers where sal >= 500"), Array(Row("500"), Row("600")))
+
+    //select <
+    checkAnswer(sqlContext.sql("SELECT sal from customers where sal < 500"), Array(Row("100"), Row("200"), Row("300"), Row("400")))
+
+    //select <=
+    checkAnswer(sqlContext.sql("SELECT sal from customers where sal <= 400"), Array(Row("100"), Row("200"), Row("300"), Row("400")))
+
     //select upper
     checkAnswer(sqlContext.sql("SELECT upper(name) from customers where name= 'kobe'"), Array(Row("KOBE")))
 
     //select lower
     checkAnswer(sqlContext.sql("SELECT lower(state) from customers where name = 'kobe'"), Array(Row("tx")))
+    
+    //select IS_NOT_NULL
+    checkAnswer(sqlContext.sql("SELECT sal from customers where name is not null"), Array(Row("100"), Row("200"), Row("300"), Row("400"), Row("500"), Row("600")))
 
-    //select
+    //select cast String
+    checkAnswer(sqlContext.sql("SELECT cast(sal as int) as sal_int from customers where name = 'kobe'"), Array(Row(600)))
+
+    //select +/-/*//
+    checkAnswer(sqlContext.sql("SELECT cast(sal as int) + 5 from customers where name = 'kobe'"), Array(Row(605)))
+    checkAnswer(sqlContext.sql("SELECT cast(sal as int) - 5 from customers where name = 'kobe'"), Array(Row(595)))
+    checkAnswer(sqlContext.sql("SELECT cast(sal as int) * 2 from customers where name = 'kobe'"), Array(Row(1200)))
+    checkAnswer(sqlContext.sql("SELECT cast(sal as int) / 3 from customers where name = 'kobe'"), Array(Row(200)))
+
+    //select substring(including the norders)
+    checkAnswer(sqlContext.sql("SELECT substring(name, 1, 3) from customers where name = 'kobe'"), Array(Row("kob")))
+    checkAnswer(sqlContext.sql("SELECT substr(name, 1, 3) from customers where name = 'kobe'"), Array(Row("kob")))
+
+    //select COALESCE
+    checkAnswer(sqlContext.sql("SELECT COALESCE(name, city, sal) from customers where name = 'kobe'"), Array(Row("kobe")))
+    checkAnswer(sqlContext.sql("SELECT COALESCE(null, city, sal) from customers where name = 'kobe'"), Array(Row("Austin")))
+    checkAnswer(sqlContext.sql("SELECT COALESCE(null, null, sal) from customers where name = 'kobe'"), Array(Row("600")))
+
+    //select if
+    checkAnswer(sqlContext.sql("SELECT if(1 < 2, name, sal) from customers where name = 'kobe'"), Array(Row("kobe")))
+    checkAnswer(sqlContext.sql("SELECT if(1 > 2, name, sal) from customers where name = 'kobe'"), Array(Row("600")))
+
+    //select union
+    checkAnswer(sqlContext.sql("SELECT type from emps where name = 'kobe' union SELECT sal from customers where name = 'kobe'"), Array(Row("SCALA"), Row("600")))
+
+    //select intersect
+    checkAnswer(sqlContext.sql("SELECT name from emps INTERSECT SELECT name from customers"), Array(Row("John"), Row("Joe"), Row("Bob"), Row("Andy"), Row("James"), Row("kobe")))
+
+    //select intersect
+    checkAnswer(sqlContext.sql("SELECT name from emps except SELECT name from customers"), Array(Row("melo")))
+
+    //select group by case
+    checkAnswer(sqlContext.sql("SELECT sum(sal), case city when 'Austin' then 'A' when 'Dallas' then 'D' when 'Miami' then 'M' when 'Houston' then 'H' else 'E' end from customers group by case city when 'Austin' then 'A' when 'Dallas' then 'D' when 'Miami' then 'M' when 'Houston' then 'H' else 'E' end"), Array(Row(1200.0, "A"), Row(300.0, "H"),Row(200.0, "D"),Row(400.0, "E")))
+
+    //select with as
+    checkAnswer(sqlContext.sql("with c as (select * from customers), e as (select * from emps) SELECT c.sal from c, e where c.name = e.name"), Array(Row("100"), Row("200"), Row("300"), Row("400"), Row("500"), Row("600")))
+
+    //select subquery in (not supported)
+    //checkAnswer(sqlContext.sql("select type from emps where name in (select name from customers where city = 'Austin')"), Array(Row("C"), Row("JAVA"), Row("SCALA")))
+
+    //select subquery as
+    checkAnswer(sqlContext.sql("select t.sal from (select * from customers where city = 'Dallas') as t"), Array(Row("200")))
+
+    //select special
+    checkAnswer(sqlContext.sql("SELECT \"type.t\" from emps2"), Array(Row("C"), Row("C++")))
+
+    //select concat
+    //checkAnswer(sqlContext.sql("SELECT concat(name, type) from emps2"), Array(Row("WadeC"), Row("MacC++")))
   }
+
+//  test("insert") {
+//    sqlContext.sql("insert into emps select * from emps2")
+//    checkAnswer(sqlContext.sql("SELECT name FROM emps"), Array(Row("John"), Row("Joe"), Row("Bob"), Row("Andy"), Row("James"), Row("kobe"), Row("melo")))
+//  }
 }
