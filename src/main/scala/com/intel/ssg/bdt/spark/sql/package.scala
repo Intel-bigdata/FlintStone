@@ -42,8 +42,8 @@ package object parser {
   val NOT_EQUALS = "NOT_EQUALS"
   val BETWEEN = "BETWEEN"
 
-  val OVER = "OVER"
-  val FILTER = "FILTER"
+  //val OVER = "OVER"
+  //val FILTER = "FILTER"
   val OR = "OR"
   val AND = "AND"
   val LIKE = "LIKE"
