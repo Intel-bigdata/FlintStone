@@ -170,7 +170,7 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
 
     //select lower
     checkAnswer(sqlContext.sql("SELECT lower(state) from customers where name = 'kobe'"), Array(Row("tx")))
-    
+
     //select IS_NOT_NULL
     checkAnswer(sqlContext.sql("SELECT sal from customers where name is not null"), Array(Row("100"), Row("200"), Row("300"), Row("400"), Row("500"), Row("600")))
 
