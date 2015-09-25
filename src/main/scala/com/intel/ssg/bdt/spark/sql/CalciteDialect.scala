@@ -21,13 +21,13 @@ import org.apache.calcite.tools.Frameworks
 import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.{SqlParser, ParserDialect}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.hive.HiveQlDialectParser
 
 import scala.util.Try
 
 class CalciteDialect extends ParserDialect with Logging {
   override def parse(sqlText: String): LogicalPlan = {
     getLogicalPlan(sqlText).getOrElse({
-      log.warn("Calcite parse/transform failed")
       if (CalciteConf.strictMode) {
         sys.error("Parse failed.")
       } else {
@@ -37,14 +37,15 @@ class CalciteDialect extends ParserDialect with Logging {
   }
 
   @transient protected val sqlParser = new SqlParser
+  @transient protected val hqlParser = new HiveQlDialectParser
 
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
     val planner = Frameworks.newConfigBuilder().build()
     val tree: Option[SqlNode] =
       Try(Some(Frameworks.getPlanner(planner).parse(sqlText))).getOrElse(None)
     if (tree.isEmpty) {
-      log.warn("failed with Calcite parser.")
-      None
+      log.warn("Failed with Calcite parser, falling back")
+      Some(hqlParser.parse(sqlText))
     } else {
       log.info("Calcite parsing passed, start to transform.")
       Try(Some(CatalystTransformer.sqlNodeToPlan(tree.get))).getOrElse(None)
