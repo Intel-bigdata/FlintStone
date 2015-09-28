@@ -385,7 +385,8 @@ class calSqlWorker(sqlNode: SqlNode){
 
           case _ =>
             println("user-defined function.")
-            UnresolvedFunction(operator.getName, operand.map(nodeToExpr))
+            //here maybe distinct
+            UnresolvedFunction(operator.getName, operand.map(nodeToExpr), isDistinct = true)
           /*case ROW_TYPE =>
               nodeToLiteral()*/
         }
