@@ -149,7 +149,10 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
 
     //select max
     checkAnswer(sqlContext.sql("SELECT max(sal) from customers"), Array(Row("600")))
+<<<<<<< HEAD
     checkAnswer(sqlContext.sql("SELECT cast(max(sal) as int) + 1 from customers"), Array(Row(601)))
+=======
+>>>>>>> origin/dev
 
     //select min
     checkAnswer(sqlContext.sql("SELECT min(sal) from customers"), Array(Row("100")))
@@ -183,9 +186,12 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
     checkAnswer(sqlContext.sql("SELECT cast(sal as int) - 5 from customers where name = 'kobe'"), Array(Row(595)))
     checkAnswer(sqlContext.sql("SELECT cast(sal as int) * 2 from customers where name = 'kobe'"), Array(Row(1200)))
     checkAnswer(sqlContext.sql("SELECT cast(sal as int) / 3 from customers where name = 'kobe'"), Array(Row(200)))
+<<<<<<< HEAD
     checkAnswer(sqlContext.sql("SELECT cast(sal as int) * -1 from customers where name = 'kobe'"), Array(Row(-600)))
     checkAnswer(sqlContext.sql("SELECT abs(cast(sal as int) * -1) from customers where name = 'kobe'"), Array(Row(600)))
     checkAnswer(sqlContext.sql("SELECT sqrt(cast(sal as int) + 300) from customers where name = 'kobe'"), Array(Row(30)))
+=======
+>>>>>>> origin/dev
 
     //select substring(including the norders)
     checkAnswer(sqlContext.sql("SELECT substring(name, 1, 3) from customers where name = 'kobe'"), Array(Row("kob")))
@@ -232,4 +238,8 @@ class QuerySuite extends QueryTest with BeforeAndAfterAll {
 //    sqlContext.sql("insert into emps select * from emps2")
 //    checkAnswer(sqlContext.sql("SELECT name FROM emps"), Array(Row("John"), Row("Joe"), Row("Bob"), Row("Andy"), Row("James"), Row("kobe"), Row("melo")))
 //  }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/dev
