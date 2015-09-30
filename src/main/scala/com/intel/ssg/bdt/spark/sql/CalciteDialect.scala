@@ -44,7 +44,7 @@ class CalciteDialect extends ParserDialect with Logging {
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
     val config = Frameworks.newConfigBuilder().build()
     val tree: Option[SqlNode] =
-      Try(Some(Frameworks.getPlanner(config).parse(sqlText))).getOrElse(None)
+      Try(Some(Frameworks.getPlanner(config).parse(sqlText.replaceAll("value", "\"value\"")))).getOrElse(None)
     if (tree.isEmpty) {
       log.warn("Failed with Calcite parser, falling back")
       Some(hqlParser.parse(sqlText))

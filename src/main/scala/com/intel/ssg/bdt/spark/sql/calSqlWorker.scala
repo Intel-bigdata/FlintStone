@@ -52,10 +52,10 @@ class calSqlWorker(sqlNode: SqlNode){
 
         if (rightNode.isSimple) {
           leftNode.getKind.name() match {
-            case SELECT =>
-              Subquery(rightNode.getSimple, nodeToPlan(leftNode))
-            case _ =>
+            case IDENTIFIER =>
               UnresolvedRelation(leftNode.asInstanceOf[SqlIdentifier].names, if (rightNode == null) None else Some(rightNode.getSimple))
+            case _ =>
+              Subquery(rightNode.getSimple, nodeToPlan(leftNode))
           }
         }else
           sys.error("wrong \'AS\' input.")
