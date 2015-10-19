@@ -3,3 +3,8 @@
 *.iml
 target/
 derby.log
+*.q
+*.t
+*.csv
+src/test/resources/
+log*

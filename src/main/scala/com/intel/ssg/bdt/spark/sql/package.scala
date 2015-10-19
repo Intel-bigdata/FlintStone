@@ -46,6 +46,8 @@ package object parser {
   //val FILTER = "FILTER"
   val OR = "OR"
   val AND = "AND"
+  val OTHER = "OTHER" // like ||
+  val OTHER_OR = "||"
   val LIKE = "LIKE"
   val IN = "IN"
   val IS_NULL = "IS_NULL"
@@ -55,6 +57,7 @@ package object parser {
   val CASE = "CASE"
   val CAST = "CAST"
   val STRING = "STRING"
+  val CHAR = "CHAR"
   val TIMESTAMP = "TIMESTAMP"
   val DOUBLE = "DOUBLE"
   //val FIXEDDECIMALTYPE = "FIXEDDECIMALTYPE"
@@ -65,6 +68,7 @@ package object parser {
 
   val DISTINCT = "DISTINCT"
   val MINUS_PREFIX = "MINUS_PREFIX"
+  val PLUS_PREFIX = "PLUS_PREFIX"
   val OTHER_FUNCTION = "OTHER_FUNCTION"
   val ITEM_FUNCTION = "ITEM"
   //val ROW_TYPE = "ROW"
@@ -88,6 +92,13 @@ package object parser {
   //sqlnode type
   val LITERAL = "LITERAL"
   val IDENTIFIER = "IDENTIFIER"
+
+  val YEAR = "YEAR"
+  val MONTH = "MONTH"
+  val DAY = "DAY"
+  val HOUR = "HOUR"
+  val MINUTE = "MINUTE"
+  val SECOND = "SECOND"
 
   val DESCENDING = "DESCENDING"
 }

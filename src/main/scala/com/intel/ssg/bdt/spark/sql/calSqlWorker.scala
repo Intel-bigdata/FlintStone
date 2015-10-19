@@ -1,8 +1,9 @@
 package parser
 
+import java.util.{Calendar, GregorianCalendar}
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.fun.SqlCase
-
+import org.apache.spark.unsafe.types.CalendarInterval
 import scala.language.implicitConversions
 
 import org.apache.calcite.sql._
@@ -209,6 +210,16 @@ class calSqlWorker(sqlNode: SqlNode){
         val rightNode = basicCallNode.getOperandList.get(1)
         And(nodeToExpr(leftNode), nodeToExpr(rightNode))
 
+      case OTHER =>
+        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
+        val operator = basicCallNode.getOperator
+        val leftNode = basicCallNode.getOperandList.get(0)
+        val rightNode = basicCallNode.getOperandList.get(1)
+        if (operator.getName.equals(OTHER_OR))
+          Or(nodeToExpr(leftNode), nodeToExpr(rightNode))
+        else
+          sys.error("not support now.")
+
       case LIKE =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
@@ -281,12 +292,17 @@ class calSqlWorker(sqlNode: SqlNode){
         val right = basicCallNode.getOperandList.get(1)
 
         val datatype =
-          right.asInstanceOf[SqlDataTypeSpec].getTypeName.asInstanceOf[SqlIdentifier].getSimple match {
+          right.asInstanceOf[SqlDataTypeSpec].getTypeName.getSimple match {
             case STRING => StringType
+            case CHAR => StringType
             case TIMESTAMP => TimestampType
             case DOUBLE => DoubleType
             //case FIXEDDECIMALTYPE =>
-            case DECIMAL => DecimalType.Unlimited
+            case DECIMAL => 
+              val precision = right.asInstanceOf[SqlDataTypeSpec].getPrecision
+              var scale = right.asInstanceOf[SqlDataTypeSpec].getScale
+              if (scale < 0) scale = 0
+              DecimalType(precision, scale)
             case DATE => DateType
             case INTEGER => IntegerType
             case BOOL => BooleanType
@@ -303,6 +319,12 @@ class calSqlWorker(sqlNode: SqlNode){
           UnaryMinus(nodeToExpr(operand))
         else
           nodeToExpr(operand)
+
+      case PLUS_PREFIX =>
+        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
+        val operator = basicCallNode.getOperator
+        val operand = basicCallNode.getOperandList.get(0)
+        nodeToExpr(operand)
 
       case OTHER_FUNCTION =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -427,19 +449,50 @@ class calSqlWorker(sqlNode: SqlNode){
           Literal.create(false, BooleanType)
 
       case SqlTypeName.DECIMAL | SqlTypeName.DOUBLE =>
-        val scalavalue = scala.math.BigDecimal(literalNode.getValue.asInstanceOf[java.math.BigDecimal])
-        val tempDecimal = scalavalue match {
-          case v if scalavalue.isValidInt => v.toIntExact
-          case v if scalavalue.isValidLong => v.toLongExact
-          case v => v.underlying()
+        val numeriLit = literalNode.asInstanceOf[SqlNumericLiteral]
+        if (numeriLit.getScale == 0){//int
+          val intvalue = scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
+          val intresult = intvalue match {
+            case v if intvalue.isValidInt => v.toIntExact
+            case v if intvalue.isValidLong => v.toLongExact
+            case v => v.underlying()
+          }
+          Literal(intresult) 
         }
-        Literal(tempDecimal)
+        else{
+          val doublevalue = scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
+          Literal(doublevalue.underlying())
+        }
 
       case SqlTypeName.CHAR =>
         Literal.create(literalNode.getStringValue, StringType)
-      //            case SqlTypeName.DATE => {}
       //            case SqlTypeName.BINARY => {}
       //            case SqlTypeName.TIME => {}
+      
+      case SqlTypeName.INTERVAL_YEAR_MONTH =>
+        val year_or_month = literalNode.getValue.asInstanceOf[SqlIntervalLiteral.IntervalValue]
+        val monthSum = year_or_month.getIntervalQualifier.timeUnitRange.name() match {
+          case YEAR => year_or_month.getIntervalLiteral.toDouble.toInt * 12
+          case MONTH => year_or_month.getIntervalLiteral.toDouble.toInt
+        }
+        Literal.create(new CalendarInterval(monthSum, 0), CalendarIntervalType)
+
+      case SqlTypeName.INTERVAL_DAY_TIME =>
+        val time_in_day = literalNode.getValue.asInstanceOf[SqlIntervalLiteral.IntervalValue]
+        val secondSum = time_in_day.getIntervalQualifier.timeUnitRange.name() match {
+          case DAY => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_DAY
+          case HOUR => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_HOUR
+          case MINUTE => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_MINUTE
+          case SECOND => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_SECOND
+        }
+        Literal.create(new CalendarInterval(0, secondSum), CalendarIntervalType)
+
+      case SqlTypeName.DATE =>
+        val calender = literalNode.getValue.asInstanceOf[GregorianCalendar]
+        val year = calender.get(Calendar.YEAR) * 12
+        val month = calender.get(Calendar.MONTH) + 1
+        val day = calender.get(Calendar.DAY_OF_MONTH).toLong * CalendarInterval.MICROS_PER_DAY
+        Literal.create(new CalendarInterval(year + month, day), CalendarIntervalType)
 
       case _ =>
         sys.error("TODO")

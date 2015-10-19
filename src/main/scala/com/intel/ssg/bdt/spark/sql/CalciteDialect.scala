@@ -20,7 +20,7 @@ import org.apache.calcite.sql.SqlNode
 import org.apache.calcite.tools.Frameworks
 import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.{SqlParser, ParserDialect}
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.{Command, LogicalPlan}
 import org.apache.spark.sql.hive.HiveQlDialectParser
 import parser.calSqlWorker
 
@@ -32,7 +32,7 @@ class CalciteDialect extends ParserDialect with Logging {
       if (CalciteConf.strictMode) {
         sys.error("Parse failed.")
       } else {
-        log.info("Using origin parser.")
+        log.info("Using origin parser.")	
         sqlParser.parse(sqlText)
       }
     })
@@ -44,14 +44,26 @@ class CalciteDialect extends ParserDialect with Logging {
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
     val config = Frameworks.newConfigBuilder().build()
     val tree: Option[SqlNode] =
-      Try(Some(Frameworks.getPlanner(config).parse(sqlText.replaceAll("value", "\"value\"")))).getOrElse(None)
+      Try(Some(Frameworks.getPlanner(config).parse(sqlText))).getOrElse(None)
     if (tree.isEmpty) {
-      log.warn("Failed with Calcite parser, falling back")
-      Some(hqlParser.parse(sqlText))
+      /*if (sqlText.startsWith("SELECT"))
+        println("attention!!!")
+      else 
+        log.warn("Failed with Calcite parser, falling back")
+      Some(hqlParser.parse(sqlText))*/
+      val hlp = hqlParser.parse(sqlText)
+      if (!hlp.isInstanceOf[Command])
+        println(sqlText + "failed.")
+      Some(hlp)
     } else {
-      log.info("Calcite parsing passed, start to transform.")
+      println("Calcite parsing passed, start to transform. " + sqlText)
       val worker: calSqlWorker = new calSqlWorker(tree.get)
-      Try(Some(worker.getLogicalPlan())).getOrElse(None)
+      val result = Try(Some(worker.getLogicalPlan())).getOrElse(None)
+
+      if (result.isEmpty)
+        println("calcite cannot do " + sqlText)
+
+      result
     }
   }
 }
