@@ -790,10 +790,10 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "0765",
     "0766",
     "0767",
-    "0768",*/
-    "0769"/*,
+    "0768",
+    "0769",
     "0770",
-    "0771",
+    "0771",*/
     "0772",
     "0773",
     "0774",
@@ -804,7 +804,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "0779",
     "0780",
     "0781",
-    "0782",
+    "0782"/*,
     "0784",
     "0785",
     "0786",
