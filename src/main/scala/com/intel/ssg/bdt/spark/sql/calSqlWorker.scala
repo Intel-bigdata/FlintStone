@@ -332,19 +332,28 @@ class calSqlWorker(sqlNode: SqlNode){
       case OTHER_FUNCTION =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator.asInstanceOf[SqlFunction]
-        val isdistinct = basicCallNode.getFunctionQuantifier.getValue.toString
+        val isdistinct = basicCallNode.getFunctionQuantifier
         val operand = basicCallNode.getOperandList
         val functionName = operator.getName
 
-        if (isdistinct.equals(DISTINCT)){
-          functionName match {
-            case SUM => SumDistinct(nodeToExpr(operand.get(0)))
-            case COUNT => CountDistinct(operand.map(nodeToExpr))
-            case _ => UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = true)
+        if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(0).asInstanceOf[SqlIdentifier].isStar){
+          if (functionName.equals(COUNT) && operand.size() == 1)
+            Count(Literal(1))
+          else
+            sys.error("invalid expression")
+        }else{
+          if (isdistinct != null && isdistinct.getValue.toString.equals(DISTINCT)){
+            functionName match {
+              case SUM => SumDistinct(nodeToExpr(operand.get(0)))
+              case COUNT => CountDistinct(operand.map(nodeToExpr))
+              case _ => UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = true)
+            }
+          }
+          else{
+            UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = false)
           }
         }
-        else
-          UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = false)
+
         /*val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
         val operand = basicCallNode.getOperandList
