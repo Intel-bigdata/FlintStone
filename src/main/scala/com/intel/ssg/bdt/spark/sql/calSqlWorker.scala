@@ -294,18 +294,21 @@ class calSqlWorker(sqlNode: SqlNode){
         val datatype =
           right.asInstanceOf[SqlDataTypeSpec].getTypeName.getSimple match {
             case STRING => StringType
+            case VARCHAR => StringType
             case CHAR => StringType
             case TIMESTAMP => TimestampType
             case DOUBLE => DoubleType
             //case FIXEDDECIMALTYPE =>
-            case DECIMAL => 
+            case DECIMAL =>
               val precision = right.asInstanceOf[SqlDataTypeSpec].getPrecision
               var scale = right.asInstanceOf[SqlDataTypeSpec].getScale
               if (scale < 0) scale = 0
               DecimalType(precision, scale)
             case DATE => DateType
             case INTEGER => IntegerType
+            case LONG => LongType
             case BOOL => BooleanType
+            case BINARY => BinaryType
             case _ => sys.error("TODO, other datatype may not be valided for calcite or spark now.")
           }
 
@@ -328,6 +331,21 @@ class calSqlWorker(sqlNode: SqlNode){
 
       case OTHER_FUNCTION =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
+        val operator = basicCallNode.getOperator.asInstanceOf[SqlFunction]
+        val isdistinct = basicCallNode.getFunctionQuantifier.getValue.toString
+        val operand = basicCallNode.getOperandList
+        val functionName = operator.getName
+
+        if (isdistinct.equals(DISTINCT)){
+          functionName match {
+            case SUM => SumDistinct(nodeToExpr(operand.get(0)))
+            case COUNT => CountDistinct(operand.map(nodeToExpr))
+            case _ => UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = true)
+          }
+        }
+        else
+          UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = false)
+        /*val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
         val operand = basicCallNode.getOperandList
 
@@ -409,9 +427,7 @@ class calSqlWorker(sqlNode: SqlNode){
             println("user-defined function.")
             //here maybe distinct
             UnresolvedFunction(operator.getName, operand.map(nodeToExpr), isDistinct = true)
-          /*case ROW_TYPE =>
-              nodeToLiteral()*/
-        }
+        }*/
 
       case IDENTIFIER =>
         val identiNode = subSqlNode.asInstanceOf[SqlIdentifier]
