@@ -1,6 +1,6 @@
 package parser
 
-import java.util.{Calendar, GregorianCalendar}
+import java.sql.Date
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.fun.SqlCase
 import org.apache.spark.unsafe.types.CalendarInterval
@@ -513,11 +513,9 @@ class calSqlWorker(sqlNode: SqlNode){
         Literal.create(new CalendarInterval(0, secondSum), CalendarIntervalType)
 
       case SqlTypeName.DATE =>
-        val calender = literalNode.getValue.asInstanceOf[GregorianCalendar]
-        val year = calender.get(Calendar.YEAR) * 12
-        val month = calender.get(Calendar.MONTH) + 1
-        val day = calender.get(Calendar.DAY_OF_MONTH).toLong * CalendarInterval.MICROS_PER_DAY
-        Literal.create(new CalendarInterval(year + month, day), CalendarIntervalType)
+        val date = literalNode.asInstanceOf[SqlDateLiteral]
+        val datestring = date.toString.substring(6, 16)
+        Literal.create(Date.valueOf(datestring), DateType)
 
       case _ =>
         sys.error("TODO")
