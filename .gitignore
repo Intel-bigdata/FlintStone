@@ -8,4 +8,5 @@ derby.log
 *.csv
 src/test/resources/
 src/test/scala/com/intel/ssg/bdt/spark/sql/HiveCompSuite.scala
+retest*
 log*

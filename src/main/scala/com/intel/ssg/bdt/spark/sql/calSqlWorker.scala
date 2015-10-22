@@ -604,23 +604,33 @@ class calSqlWorker(sqlNode: SqlNode){
   def  dealWithOrderByNode(sqlnode: SqlOrderBy) : LogicalPlan = {
     //especially fetch to get limit
     val query = sqlnode.query.asInstanceOf[SqlSelect]
+    val selectList = query.getSelectList
     val orderList = sqlnode.orderList
 
     val withHaving = prepareSelect(query)
 
     val orderSeq = ListBuffer[SortOrder]()
+
     for (ele <- orderList) {
       ele.getKind.name() match {
         case DESCENDING =>
           val descNode = ele.asInstanceOf[SqlBasicCall]
-          orderSeq += SortOrder(nodeToExpr(descNode.getOperandList.get(0)), Descending)
+          val operand = descNode.getOperandList.get(0)
+          if (operand.isInstanceOf[SqlIdentifier])
+            orderSeq += SortOrder(nodeToExpr(operand), Descending)
+          else{
+            val index = operand.asInstanceOf[SqlNumericLiteral].getPrec
+            orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
+          }
 
         case IDENTIFIER =>
           //val IdenNode = ele.asInstanceOf[SqlIdentifier]
           orderSeq += SortOrder(nodeToExpr(ele), Ascending)
+        case LITERAL =>
+          val index = ele.asInstanceOf[SqlNumericLiteral].getPrec
+          orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
       }
     }
-
     val withOrder = Sort(orderSeq, true, withHaving)
 
     val limitNode = sqlnode.fetch//limit expression
