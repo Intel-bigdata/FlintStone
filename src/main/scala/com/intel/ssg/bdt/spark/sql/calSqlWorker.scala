@@ -587,7 +587,6 @@ class calSqlWorker(sqlNode: SqlNode){
     val right = sqlnode.getRight
     val joinType = sqlnode.getJoinType
     val conditionType = sqlnode.getConditionType
-    val condition = sqlnode.getCondition
 
     val jt =
       joinType.name() match {
@@ -596,9 +595,45 @@ class calSqlWorker(sqlNode: SqlNode){
         case LEFT_JOIN => LeftOuter
         case RIGHT_JOIN => RightOuter
         case FULL => FullOuter
+        case _ => Inner
       }
 
-    Join(nodeToPlan(left), nodeToPlan(right), jt, if (condition != null) Some(nodeToExpr(condition)) else None)
+    if (conditionType.name().equals(USING)){
+      val condition = sqlnode.getCondition.asInstanceOf[SqlNodeList]
+      if (left.isInstanceOf[SqlIdentifier] && right.isInstanceOf[SqlIdentifier]){
+        var conditionBuf = ListBuffer[Expression]()
+        for (ele <- condition){
+          val elename = ele.asInstanceOf[SqlIdentifier].names.get(0)
+          val leftname = left.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
+          val rightname = right.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
+          println(leftname,rightname)
+          //first each make an equal
+          val equalExpr = EqualTo(UnresolvedAttribute(leftname), UnresolvedAttribute(rightname))
+          //add expr to buf
+          conditionBuf += equalExpr
+        }
+
+        val expressionPara = combineAdd(conditionBuf)
+        Join(nodeToPlan(left), nodeToPlan(right), jt, if (expressionPara != null) Some(expressionPara) else None)
+
+      }else
+        sys.error("subquery and using not support!")
+    }else{
+      val condition = sqlnode.getCondition
+      Join(nodeToPlan(left), nodeToPlan(right), jt, if (condition != null) Some(nodeToExpr(condition)) else None)
+    }
+  }
+
+  def combineAdd(exprList: ListBuffer[Expression]) : Expression = {
+    if (exprList.size == 1)
+      exprList.get(0)
+    else if (exprList.size == 2)
+      And(exprList.get(0), exprList.get(1))
+    else{
+      val first = exprList.remove(0)
+      println(exprList)
+      And(first, combineAdd(exprList))
+    }
   }
 
   def  dealWithOrderByNode(sqlnode: SqlOrderBy) : LogicalPlan = {
@@ -610,7 +645,6 @@ class calSqlWorker(sqlNode: SqlNode){
     val withHaving = prepareSelect(query)
 
     val orderSeq = ListBuffer[SortOrder]()
-
     for (ele <- orderList) {
       ele.getKind.name() match {
         case DESCENDING =>
@@ -619,18 +653,31 @@ class calSqlWorker(sqlNode: SqlNode){
           if (operand.isInstanceOf[SqlIdentifier])
             orderSeq += SortOrder(nodeToExpr(operand), Descending)
           else{
-            val index = operand.asInstanceOf[SqlNumericLiteral].getPrec
-            orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
+            val index = operand.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
+            //if ident and else expr
+            if (selectList.get(index).getKind.name().equals(IDENTIFIER))
+              orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
+            else
+              orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Descending)
           }
 
         case IDENTIFIER =>
           //val IdenNode = ele.asInstanceOf[SqlIdentifier]
           orderSeq += SortOrder(nodeToExpr(ele), Ascending)
+
         case LITERAL =>
-          val index = ele.asInstanceOf[SqlNumericLiteral].getPrec
-          orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
+          val index = ele.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
+          //if ident and else expr
+          if (selectList.get(index).getKind.name().equals(IDENTIFIER))
+            orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
+          else
+            orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
+
+        case _ =>
+          sys.error("order by error. pls check.")
       }
     }
+
     val withOrder = Sort(orderSeq, true, withHaving)
 
     val limitNode = sqlnode.fetch//limit expression

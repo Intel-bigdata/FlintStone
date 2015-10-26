@@ -13,6 +13,7 @@ package object parser {
   val LEFT_JOIN = "LEFT"
   val RIGHT_JOIN = "RIGHT"
   val FULL = "FULL"
+  val USING = "USING"
 
   //join condition type
   val ON = "ON"
