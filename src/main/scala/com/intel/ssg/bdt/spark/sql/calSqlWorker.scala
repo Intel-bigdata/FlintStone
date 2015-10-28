@@ -51,7 +51,7 @@ class calSqlWorker(sqlNode: SqlNode){
         val leftNode = as_sqlnode.getOperandList.get(0)
         val rightNode = as_sqlnode.getOperandList.get(1).asInstanceOf[SqlIdentifier]
 
-        if (rightNode.isSimple) {
+        if (rightNode.isSimple || rightNode.isStar) {
           leftNode.getKind.name() match {
             case IDENTIFIER =>
               UnresolvedRelation(leftNode.asInstanceOf[SqlIdentifier].names, if (rightNode == null) None else Some(rightNode.getSimple))
