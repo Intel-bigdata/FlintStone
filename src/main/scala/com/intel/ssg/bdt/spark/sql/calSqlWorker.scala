@@ -68,7 +68,10 @@ class calSqlWorker(sqlNode: SqlNode){
         val basicallnode = subSqlNode.asInstanceOf[SqlBasicCall]
         val leftnode = basicallnode.getOperandList.get(0)
         val rightnode = basicallnode.getOperandList.get(1)
-        Union(nodeToPlan(leftnode), nodeToPlan(rightnode))
+        if (basicallnode.getOperator.getName.equals(UNION))
+          Distinct(Union(nodeToPlan(leftnode), nodeToPlan(rightnode)))
+        else
+          Union(nodeToPlan(leftnode), nodeToPlan(rightnode))
 
       case INTERSECT =>
         val basicallnode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -215,8 +218,9 @@ class calSqlWorker(sqlNode: SqlNode){
         val operator = basicCallNode.getOperator
         val leftNode = basicCallNode.getOperandList.get(0)
         val rightNode = basicCallNode.getOperandList.get(1)
-        if (operator.getName.equals(OTHER_OR))
-          Or(nodeToExpr(leftNode), nodeToExpr(rightNode))
+        if (operator.getName.equals(OTHER_OR)){
+          ConcatWs(Literal("") +: basicCallNode.getOperandList.map(nodeToExpr))
+        }
         else
           sys.error("not support now.")
 
@@ -336,7 +340,17 @@ class calSqlWorker(sqlNode: SqlNode){
         val operand = basicCallNode.getOperandList
         val functionName = operator.getName
 
-        if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(0).asInstanceOf[SqlIdentifier].isStar){
+        if (functionName.equals(EXTRACT)){
+          val extraction = operand.get(0).asInstanceOf[SqlIntervalQualifier].timeUnitRange.name()
+          val child = UnresolvedAttribute(operand.get(1).asInstanceOf[SqlIdentifier].names)
+          //UnresolvedExtractValue(UnresolvedAttribute(child), UnresolvedAttribute.quoted(extraction))
+          extraction match {
+            case HOUR => Hour(child)
+            case MINUTE => Minute(child)
+            case SECOND => Second(child)
+          }
+        }
+        else if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(0).asInstanceOf[SqlIdentifier].isStar){
           if (functionName.equals(COUNT) && operand.size() == 1)
             Count(Literal(1))
           else

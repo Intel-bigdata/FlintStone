@@ -92,6 +92,7 @@ package object parser {
   val COALESCE = "COALESCE"
   val SQRT = "SQRT"
   val ABS = "ABS"
+  val EXTRACT = "EXTRACT"
 
   //sqlnode type
   val LITERAL = "LITERAL"
