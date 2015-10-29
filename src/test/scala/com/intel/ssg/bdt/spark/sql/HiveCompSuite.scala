@@ -36,7 +36,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
    * blacklist are implicitly marked as ignored.
    */
   override def whiteList = Seq(
-    "0456"
+    "0896","1029"
     //for nist
     /*"0000",
     "0001",

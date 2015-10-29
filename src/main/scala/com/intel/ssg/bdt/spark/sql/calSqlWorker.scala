@@ -568,10 +568,11 @@ class calSqlWorker(sqlNode: SqlNode){
 
     val withProjection =
       if (groupByNodeList == null)
-        Project(assignAliases(selectNodeList.map(nodeToExpr).toSeq), withFilter)
+        //Project(assignAliases(selectNodeList.map(nodeToExpr).toSeq), withFilter)
+        Project(selectNodeList.getList.map(nodeToExpr).map(UnresolvedAlias), withFilter)
       else{
         val list = groupByNodeList.getList.map(nodeToExpr)
-        Aggregate(list, assignAliases(selectNodeList.map(nodeToExpr).toSeq), withFilter)
+        Aggregate(list, selectNodeList.getList.map(nodeToExpr).map(UnresolvedAlias), withFilter)
       }
 
     val withDistinct =
@@ -671,6 +672,8 @@ class calSqlWorker(sqlNode: SqlNode){
             //if ident and else expr
             if (selectList.get(index).getKind.name().equals(IDENTIFIER))
               orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
+            else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
+              orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
             else
               orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Descending)
           }
@@ -684,6 +687,8 @@ class calSqlWorker(sqlNode: SqlNode){
           //if ident and else expr
           if (selectList.get(index).getKind.name().equals(IDENTIFIER))
             orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
+          else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
+            orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
           else
             orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
 
