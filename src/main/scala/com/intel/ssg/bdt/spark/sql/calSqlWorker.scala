@@ -1,6 +1,6 @@
 package parser
 
-import java.sql.Date
+import java.sql.{Timestamp, Date}
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.fun.SqlCase
 import org.apache.spark.unsafe.types.CalendarInterval
@@ -350,6 +350,13 @@ class calSqlWorker(sqlNode: SqlNode){
             case SECOND => Second(child)
           }
         }
+        else if (functionName.equals(NULLIF) && operand.size() == 2){
+          val whenele = EqualTo(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)))
+          val thenele = Literal.create(null, NullType)
+          val elseele = nodeToExpr(operand.get(0))
+
+          CaseWhen(Seq(whenele, thenele, elseele))
+        }
         else if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(0).asInstanceOf[SqlIdentifier].isStar){
           if (functionName.equals(COUNT) && operand.size() == 1)
             Count(Literal(1))
@@ -530,6 +537,11 @@ class calSqlWorker(sqlNode: SqlNode){
         val date = literalNode.asInstanceOf[SqlDateLiteral]
         val datestring = date.toString.substring(6, 16)
         Literal.create(Date.valueOf(datestring), DateType)
+
+      case SqlTypeName.TIMESTAMP =>
+        val timestamp = literalNode.asInstanceOf[SqlTimestampLiteral].toString
+        val timestampparam = timestamp.substring(11, timestamp.size - 1)
+        Literal.create(Timestamp.valueOf(timestampparam), TimestampType)
 
       case _ =>
         sys.error("TODO")

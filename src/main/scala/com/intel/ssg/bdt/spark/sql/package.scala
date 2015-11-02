@@ -54,6 +54,7 @@ package object parser {
   val IS_NULL = "IS_NULL"
   val NOT = "NOT"
   val IS_NOT_NULL = "IS_NOT_NULL"
+  val NULLIF = "NULLIF"
 
   val CASE = "CASE"
   val CAST = "CAST"
