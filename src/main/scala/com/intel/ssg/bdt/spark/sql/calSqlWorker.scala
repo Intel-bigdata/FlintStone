@@ -348,6 +348,8 @@ class calSqlWorker(sqlNode: SqlNode){
             case HOUR => Hour(child)
             case MINUTE => Minute(child)
             case SECOND => Second(child)
+            case MONTH => Month(child)
+            case YEAR => Year(child)
           }
         }
         else if (functionName.equals(NULLIF) && operand.size() == 2){
