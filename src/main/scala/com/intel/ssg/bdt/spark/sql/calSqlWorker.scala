@@ -687,9 +687,9 @@ class calSqlWorker(sqlNode: SqlNode){
             if (selectList.get(index).getKind.name().equals(IDENTIFIER))
               orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
             else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
-              orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
-            else
               orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Descending)
+            else
+              orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
           }
 
         case IDENTIFIER =>
@@ -702,9 +702,9 @@ class calSqlWorker(sqlNode: SqlNode){
           if (selectList.get(index).getKind.name().equals(IDENTIFIER))
             orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
           else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
-            orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
-          else
             orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
+          else
+            orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
 
         case _ =>
           sys.error("order by error. pls check.")

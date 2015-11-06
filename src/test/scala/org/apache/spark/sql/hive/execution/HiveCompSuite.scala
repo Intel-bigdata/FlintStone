@@ -27,7 +27,7 @@ import scala.util.control.NonFatal
 class HiveCompSuite extends HiveCompatibilitySuite {
   override def beforeAll() {
     super.beforeAll()
-    //TestHive.setConf("spark.sql.dialect", classOf[CalciteDialect].getCanonicalName)
+    TestHive.setConf("spark.sql.dialect", classOf[CalciteDialect].getCanonicalName)
     TestHive.setConf("spark.sql.caseSensitive", "false")
   }
 
@@ -1055,7 +1055,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "1036",
     "1037",
     "1038",
-    "1039"/*,
+    "1039",
     "1051",
     "1052",
     "1053",
@@ -2192,7 +2192,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "6101",
     "6102",
     "6103",
-    "6104"*/
+    "6104"
     //for hive
     /*"add_part_exist",
     "add_part_multiple",
