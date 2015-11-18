@@ -1,0 +1,10 @@
+drop database IF EXISTS zly CASCADE;
+create database zly;
+use zly;
+CREATE TABLE WORKS(W_EMPNUM STRING,W_PNUM STRING,W_HOURS DOUBLE) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE;
+LOAD DATA LOCAL INPATH '_datapath_/plusd/manualSql/WORKS.csv' OVERWRITE INTO TABLE WORKS;
+CREATE TABLE STAFF(S_EMPNUM STRING,S_EMPNAME STRING,S_GRADE DOUBLE,S_CITY STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE;
+LOAD DATA LOCAL INPATH '_datapath_/plusd/manualSql/STAFF.csv' OVERWRITE INTO TABLE STAFF;
+CREATE TABLE PROJ(P_PNUM STRING,P_PNAME STRING,P_PTYPE STRING,P_BUDGET DOUBLE,P_CITY STRING,P_STARTDATE DATE,P_ENDDATE DATE) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE;
+LOAD DATA LOCAL INPATH '_datapath_/plusd/manualSql/PROJ.csv' OVERWRITE INTO TABLE PROJ;
+select p_pnum from proj where p_pnum in (select max(w_pnum) from works w1 where exists (select w_pnum from works w2 where w2.w_pnum=w1.w_pnum and w2.w_hours not in (12, 45, 80)) or w_hours <(select max(w_hours) from works w2 where w2.w_hours<w1.w_hours-30) group by w_empnum having w_empnum not in (select s_empnum from staff where s_grade>10) or exists(select s_empnum from staff where s_empnum = w_empnum and s_city in (select p_city from proj where p_budget>20000.0)));

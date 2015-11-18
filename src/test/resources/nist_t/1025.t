@@ -1,0 +1,17 @@
+| E1 | NULL | 
+| E13 | 82 | 
+| E18 | NULL | 
+| E2 | NULL | 
+| E22 | NULL | 
+| E3 | NULL | 
+| E3 | 100 | 
+| E4 | NULL | 
+| E5 | NULL | 
+| E6 | NULL | 
+| E6 | 55 | 
+| E7 | NULL | 
+| E8 | NULL | 
+| E9 | NULL | 
+| E9 | 10 | 
+| UPP | NULL | 
+| e1 | NULL | 

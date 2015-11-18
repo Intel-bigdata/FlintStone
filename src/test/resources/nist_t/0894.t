@@ -1,0 +1,12 @@
+| E1  | Alice                | 4 | Lyon            | 20 | 40000 | 11 | 
+| E1  | Alice                | 8 | Lyon            | 20 | 40000 | 11 | 
+| E1  | Alice                | 12 | Geneva          | 20 | 40000 | 11 | 
+| E2  | Betty                | 16 | Strasbourg      | 15 | 20000 | 12 | 
+| E2  | Betty                | 16 | Strasbourg      | 15 | 20000 | 13 | 
+| E2  | Betty                | 20 | Munich          | 15 | 20000 | 12 | 
+| E2  | Betty                | 20 | Munich          | 15 | 20000 | 13 | 
+| E3  | Colin                | 24 | Leuven          | 10 | 15000 | 14 | 
+| E3  | Colin                | 24 | Leuven          | 10 | 8000 | 15 | 
+| E3  | Colin                | 24 | Leuven          | 10 | 8000 | 16 | 
+| E4  | Daniel               | 28 | Cologne         | NULL | NULL | NULL | 
+| E5  | Edward               | NULL | NULL | 30 | 50000 | 17 | 

@@ -1,0 +1,14 @@
+| 2 | 0 | 
+| NULL | NULL | 
+| 5 | 30 | 
+| NULL | NULL | 
+| 1 | 0 | 
+| NULL | NULL | 
+| 4 | 0 | 
+| NULL | NULL | 
+| 10 | 0 | 
+| NULL | NULL | 
+| NULL | NULL | 
+| NULL | NULL | 
+| NULL | NULL | 
+| NULL | NULL | 
