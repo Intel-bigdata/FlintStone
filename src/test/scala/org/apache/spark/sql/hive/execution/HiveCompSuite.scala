@@ -41,7 +41,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
    */
   override def whiteList = Seq(
     //for nist
-    "0000",
+    "0000"/*,
     "0001",
     "0002",
     "0003",
@@ -2192,7 +2192,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "6101",
     "6102",
     "6103",
-    "6104"
+    "6104"*/
     //for hive
     /*"add_part_exist",
     "add_part_multiple",
