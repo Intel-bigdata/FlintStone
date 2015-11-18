@@ -4,6 +4,5 @@
 target/
 derby.log
 *.csv
-src/test/scala/com/intel/ssg/bdt/spark/sql/HiveCompSuite.scala
 retest*
 log*
