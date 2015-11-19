@@ -17,7 +17,7 @@
 
   <groupId>com.intel.ssg.bdt</groupId>
   <artifactId>spark-calcite-parser</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0-calciteParser-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Calcite parser for SparkSQL</name>
