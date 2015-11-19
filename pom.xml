@@ -45,7 +45,6 @@
     <!-- Build Properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.useIncrementalCompilation>false</maven.compiler.useIncrementalCompilation>
-    <maven.repo.local>${user.home}/.m2/repository</maven.repo.local>
     <basedir>./</basedir>
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
