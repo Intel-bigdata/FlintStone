@@ -41,6 +41,19 @@
     </license>
   </licenses>
 
+<distributionManagement>
+  <repository>
+     <id>apache-snapshots</id>
+     <name>internal-Snapshots</name>
+     <url>http://10.0.2.52:8081/nexus/content/repositories/central/</url>
+  </repository>
+  <snapshotRepository>
+     <id>deployment</id>
+     <name>Internal Releases</name>
+     <url>http://10.0.2.52:8081/nexus/content/repositories/apache-snapshots/</url>
+  </snapshotRepository>
+</distributionManagement>
+
   <properties>
     <!-- Build Properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
