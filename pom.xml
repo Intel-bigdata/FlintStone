@@ -42,16 +42,16 @@
   </licenses>
 
 <distributionManagement>
-  <repository>
+  <snapshotRepository>
      <id>apache-snapshots</id>
      <name>internal-Snapshots</name>
      <url>http://10.0.2.52:8081/nexus/content/repositories/central/</url>
-  </repository>
-  <snapshotRepository>
+  </snapshotRepository>
+  <repository>
      <id>deployment</id>
      <name>Internal Releases</name>
      <url>http://10.0.2.52:8081/nexus/content/repositories/apache-snapshots/</url>
-  </snapshotRepository>
+  </repository>
 </distributionManagement>
 
   <properties>
