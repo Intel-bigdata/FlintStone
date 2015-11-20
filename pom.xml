@@ -50,7 +50,7 @@
   <repository>
      <id>central</id>
      <name>Central</name>
-     <url>http://10.0.0.174:8080/nexus/content/repositories/central/</url>
+     <url>http://10.0.0.174:8080/nexus/content/repositories/central</url>
   </repository>
 </distributionManagement>
 
