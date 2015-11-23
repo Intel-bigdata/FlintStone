@@ -43,9 +43,9 @@
 
 <distributionManagement>
   <snapshotRepository>
-     <id>apache-snapshots</id>
+     <id>snapshots</id>
      <name>Apache Snapshots</name>
-     <url>http://10.0.0.174:8080/nexus/content/repositories/apache-snapshots</url>
+     <url>http://10.0.0.174:8080/nexus/content/repositories/snapshots</url>
   </snapshotRepository>
   <repository>
      <id>central</id>
