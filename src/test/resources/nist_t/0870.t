@@ -1,0 +1,10 @@
+| E1  | Alice                | 4 | Lyon            | 
+| E1  | Alice                | 8 | Lyon            | 
+| E1  | Alice                | 12 | Geneva          | 
+| E10 | John                 | 20 | Brussels        | 
+| E12 | Laura                | 20 | Deale           | 
+| E2  | Betty                | 16 | Strasbourg      | 
+| E2  | Betty                | 20 | Munich          | 
+| E3  | Colin                | 24 | Leuven          | 
+| E4  | Daniel               | 28 | Cologne         | 
+| E9  | Imogen               | 10 | Prague          | 

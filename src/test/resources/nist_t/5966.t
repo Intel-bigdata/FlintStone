@@ -1,0 +1,16 @@
+| 7 | 80 | Deale           | Design | 
+| 3 | 80 | Vienna          | Code   | 
+| 2 | 12 | Toyko           | Design | 
+| 2 | 12 | Vienna          | Test   | 
+| 3 | 80 | Toyko           | Design | 
+| 1 | 5 | Deale           | Design | 
+| 3 | NULL | Vienna          | Code   | 
+| 3 | 62 | Vienna          | Test   | 
+| 1 | 100 | Toyko           | Design | 
+| 7 | 40 | Deale           | Design | 
+| 4 | 20 | Vienna          | Code   | 
+| 1 | 200 | Deale           | Design | 
+| 1 | 20 | Deale           | Design | 
+| 2 | 150 | Toyko           | Design | 
+| 1 | 45 | Vienna          | Test   | 
+| 2 | NULL | Vienna          | Test   | 

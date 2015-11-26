@@ -1,0 +1,4 @@
+| Vienna          | 
+| NULL | 
+| NULL | 
+| Seoul           | 

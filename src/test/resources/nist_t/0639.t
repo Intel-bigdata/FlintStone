@@ -1,0 +1,9 @@
+| 13 | MARY                 | 15 | VOLLEYBALL           | 
+| 22 | David                | 12 | Computer             | 
+| 23 | Lilian               | 12 | Computer             | 
+| 24 | Mary                 | 13 | Physics              | 
+| 25 | Joan                 | 13 | Physics              | 
+| 27 | Peter                | 15 | English              | 
+| 28 | BARBARA              | 14 | EDUCATION            | 
+| 30 | Thomas               | 12 | Computer             | 
+| 41 | Tom                  | 20 | Architecture         | 
