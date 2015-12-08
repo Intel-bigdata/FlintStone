@@ -4,3 +4,4 @@
 target
 derby.log
 test*
+retest*
