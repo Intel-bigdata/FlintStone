@@ -18,7 +18,7 @@ package org.apache.spark.sql.flint
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, FunctionRegistry}
-import org.apache.spark.sql.catalyst.optimizer.Optimizer
+import org.apache.spark.sql.catalyst.optimizer.{DefaultOptimizer, Optimizer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.ExtractPythonUDFs
@@ -34,7 +34,8 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
   @transient
   override protected[sql] lazy val functionRegistry: FunctionRegistry = FunctionRegistry.builtin
 
-  val flintExtendedRules: Seq[Rule] = Nil
+  val flintExtendedRules: List[Rule[LogicalPlan]] =
+    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) Nil else Nil
 
   @transient
   /* An analyzer that uses the Hive metastore, with flint extensions */
@@ -47,7 +48,7 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
           ExtractPythonUDFs ::
           ResolveHiveWindowFunction ::
           PreInsertCastAndRename ::
-          if (conf.dialect == classOf[CalciteDialect].getCanonicalName) flintExtendedRules else Nil
+          flintExtendedRules
 
       override val extendedCheckRules = Seq(
         PreWriteCheck(catalog)
@@ -55,7 +56,7 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
     }
 
   @transient
-  override protected[sql] lazy val optimizer: Optimizer = super.optimizer
+  override protected[sql] lazy val optimizer: Optimizer = DefaultOptimizer
 
   /** Extends QueryExecution with flint specific features. */
   protected[sql] class QueryExecution(logicalPlan: LogicalPlan)
