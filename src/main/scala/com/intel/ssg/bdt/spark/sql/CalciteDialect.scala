@@ -22,7 +22,6 @@ import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.{SqlParser, ParserDialect}
 import org.apache.spark.sql.catalyst.plans.logical.{Command, LogicalPlan}
 import org.apache.spark.sql.hive.HiveQlDialectParser
-import parser.calSqlWorker
 
 import scala.util.Try
 
@@ -57,8 +56,8 @@ class CalciteDialect extends ParserDialect with Logging {
       Some(hlp)
     } else {
       println("Calcite parsing passed, start to transform. " + sqlText)
-      val worker: calSqlWorker = new CalSqlWorker(tree.get)
-      val result = Try(Some(worker.getLogicalPlan())).getOrElse(None)
+      val worker = new CalSqlWorker(tree.get)
+      val result = Try(Some(worker.getLogicalPlan)).getOrElse(None)
 
       if (result.isEmpty)
         println("calcite cannot do " + sqlText)
