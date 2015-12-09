@@ -38,7 +38,7 @@ class CalciteDialect extends ParserDialect with Logging {
     })
   }
 
-  @transient protected val sqlParser = new SqlParser
+  @transient protected val sqlParser = SqlParser
   @transient protected val hqlParser = new HiveQlDialectParser
 
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {

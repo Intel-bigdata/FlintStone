@@ -61,8 +61,8 @@
     <basedir>./</basedir>
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
-    <spark.version>1.5.0</spark.version>
     <!--<spark.internal.version>temp_version-SNAPSHOT</spark.internal.version>-->
+    <spark.version>1.5.2</spark.version>
     <spark.internal.version>1.5.2</spark.internal.version>
   </properties>
 

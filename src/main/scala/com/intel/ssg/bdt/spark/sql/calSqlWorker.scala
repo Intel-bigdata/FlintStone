@@ -1,6 +1,8 @@
 package parser
 
 import java.sql.{Timestamp, Date}
+import com.intel.ssg.bdt.spark.sql.CalciteDialect
+import com.intel.ssg.bdt.spark.sql.plans.logical._
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.fun.SqlCase
 import org.apache.spark.unsafe.types.CalendarInterval
@@ -616,6 +618,7 @@ class calSqlWorker(sqlNode: SqlNode){
     val right = sqlnode.getRight
     val joinType = sqlnode.getJoinType
     val conditionType = sqlnode.getConditionType
+    val isNatural = sqlnode.isNatural
 
     val jt =
       joinType.name() match {
@@ -643,13 +646,29 @@ class calSqlWorker(sqlNode: SqlNode){
         }
 
         val expressionPara = combineAdd(conditionBuf)
-        Join(nodeToPlan(left), nodeToPlan(right), jt, if (expressionPara != null) Some(expressionPara) else None)
+        if (isNatural) {
+          NaturalJoin(nodeToPlan(left), nodeToPlan(right), jt, Option(expressionPara))
+        } else {
+          Join(nodeToPlan(left), nodeToPlan(right), jt, Option(expressionPara))
+        }
 
       }else
         sys.error("subquery and using not support!")
     }else{
       val condition = sqlnode.getCondition
-      Join(nodeToPlan(left), nodeToPlan(right), jt, if (condition != null) Some(nodeToExpr(condition)) else None)
+      if (isNatural) {
+        NaturalJoin(
+          nodeToPlan(left),
+          nodeToPlan(right),
+          jt,
+          if (condition != null) Some(nodeToExpr(condition)) else None)
+      } else {
+        Join(
+          nodeToPlan(left),
+          nodeToPlan(right),
+          jt,
+          if (condition != null) Some(nodeToExpr(condition)) else None)
+      }
     }
   }
 
