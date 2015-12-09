@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.ExtractPythonUDFs
 import org.apache.spark.sql.execution.datasources.{PreInsertCastAndRename, PreWriteCheck}
+import org.apache.spark.sql.flint.analyzer._
 import org.apache.spark.sql.hive.{HiveContext, ResolveHiveWindowFunction}
 
 import com.intel.ssg.bdt.spark.sql.CalciteDialect
@@ -35,7 +36,9 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
   override protected[sql] lazy val functionRegistry: FunctionRegistry = FunctionRegistry.builtin
 
   val flintExtendedRules: List[Rule[LogicalPlan]] =
-    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) Nil else Nil
+    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) {
+      ResolveNaturalJoin :: Nil
+    } else Nil
 
   @transient
   /* An analyzer that uses the Hive metastore, with flint extensions */
