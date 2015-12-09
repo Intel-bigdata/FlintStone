@@ -57,7 +57,7 @@ class CalciteDialect extends ParserDialect with Logging {
       Some(hlp)
     } else {
       println("Calcite parsing passed, start to transform. " + sqlText)
-      val worker: calSqlWorker = new calSqlWorker(tree.get)
+      val worker: calSqlWorker = new CalSqlWorker(tree.get)
       val result = Try(Some(worker.getLogicalPlan())).getOrElse(None)
 
       if (result.isEmpty)
