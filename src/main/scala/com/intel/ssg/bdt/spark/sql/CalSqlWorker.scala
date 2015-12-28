@@ -1,6 +1,23 @@
-package parser
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intel.ssg.bdt.spark.sql
 
 import java.sql.{Timestamp, Date}
+import com.intel.ssg.bdt.spark.sql.plans.logical._
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.fun.SqlCase
 import org.apache.spark.unsafe.types.CalendarInterval
@@ -16,11 +33,11 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 
 //support select and insert both
-class calSqlWorker(sqlNode: SqlNode){
+class CalSqlWorker(sqlNode: SqlNode) {
   //val calparser: calParser = new calParser()
   //val sqlNode: SqlNode = calparser.getSqlNode(input)
 
-  def getLogicalPlan(): LogicalPlan = {
+  def getLogicalPlan: LogicalPlan = {
     nodeToPlan(sqlNode)
   }
 
@@ -616,6 +633,7 @@ class calSqlWorker(sqlNode: SqlNode){
     val right = sqlnode.getRight
     val joinType = sqlnode.getJoinType
     val conditionType = sqlnode.getConditionType
+    val isNatural = sqlnode.isNatural
 
     val jt =
       joinType.name() match {
@@ -643,13 +661,29 @@ class calSqlWorker(sqlNode: SqlNode){
         }
 
         val expressionPara = combineAdd(conditionBuf)
-        Join(nodeToPlan(left), nodeToPlan(right), jt, if (expressionPara != null) Some(expressionPara) else None)
+        if (isNatural) {
+          NaturalJoin(nodeToPlan(left), nodeToPlan(right), jt, Option(expressionPara))
+        } else {
+          Join(nodeToPlan(left), nodeToPlan(right), jt, Option(expressionPara))
+        }
 
       }else
         sys.error("subquery and using not support!")
     }else{
       val condition = sqlnode.getCondition
-      Join(nodeToPlan(left), nodeToPlan(right), jt, if (condition != null) Some(nodeToExpr(condition)) else None)
+      if (isNatural) {
+        NaturalJoin(
+          nodeToPlan(left),
+          nodeToPlan(right),
+          jt,
+          if (condition != null) Some(nodeToExpr(condition)) else None)
+      } else {
+        Join(
+          nodeToPlan(left),
+          nodeToPlan(right),
+          jt,
+          if (condition != null) Some(nodeToExpr(condition)) else None)
+      }
     }
   }
 

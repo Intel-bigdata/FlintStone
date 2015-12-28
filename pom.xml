@@ -61,8 +61,8 @@
     <basedir>./</basedir>
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
-    <spark.version>1.5.0</spark.version>
     <!--<spark.internal.version>temp_version-SNAPSHOT</spark.internal.version>-->
+    <spark.version>1.5.2</spark.version>
     <spark.internal.version>1.5.2</spark.internal.version>
   </properties>
 
@@ -208,6 +208,20 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
+      <!--<version>${spark.version}</version>-->
+      <version>${spark.internal.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
+      <!--<version>${spark.version}</version>-->
+      <version>${spark.internal.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -219,6 +233,12 @@
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.binary.version}</artifactId>
       <version>2.2.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalacheck</groupId>
+      <artifactId>scalacheck_${scala.binary.version}</artifactId>
+      <version>1.11.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -286,6 +306,21 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <encoding>UTF-8</encoding>
+          <maxmem>1024m</maxmem>
+          <fork>true</fork>
+          <compilerArgs>
+            <arg>-Xlint:all,-serial,-path</arg>
+          </compilerArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

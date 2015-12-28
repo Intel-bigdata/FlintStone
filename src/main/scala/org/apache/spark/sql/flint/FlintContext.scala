@@ -23,19 +23,29 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.ExtractPythonUDFs
 import org.apache.spark.sql.execution.datasources.{PreInsertCastAndRename, PreWriteCheck}
+import org.apache.spark.sql.flint.analyzer._
 import org.apache.spark.sql.hive.{HiveContext, ResolveHiveWindowFunction}
 
 import com.intel.ssg.bdt.spark.sql.CalciteDialect
 
-class FlintContext(sc: SparkContext) extends HiveContext(sc) {
-  self =>
+class FlintContext(sc: SparkContext) extends HiveContext(sc) with FlintContextTrait {
+
+}
+
+trait FlintContextTrait {
+  self: HiveContext =>
   // TODO: we need to check corresponding Spark version since we integrate with default analyzer
   // and optimizer.
   @transient
   override protected[sql] lazy val functionRegistry: FunctionRegistry = FunctionRegistry.builtin
 
-  val flintExtendedRules: List[Rule[LogicalPlan]] =
-    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) Nil else Nil
+  /**
+   * Returns additional resolution rules for our context. Use def because we may switch dialects.
+   */
+  def flintExtendedRules: List[Rule[LogicalPlan]] =
+    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) {
+      ResolveNaturalJoin :: Nil
+    } else Nil
 
   @transient
   /* An analyzer that uses the Hive metastore, with flint extensions */
@@ -43,12 +53,12 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
     new Analyzer(catalog, functionRegistry, conf) {
       override val extendedResolutionRules =
         catalog.ParquetConversions ::
-          catalog.CreateTables ::
-          catalog.PreInsertionCasts ::
-          ExtractPythonUDFs ::
-          ResolveHiveWindowFunction ::
-          PreInsertCastAndRename ::
-          flintExtendedRules
+        catalog.CreateTables ::
+        catalog.PreInsertionCasts ::
+        ExtractPythonUDFs ::
+        ResolveHiveWindowFunction ::
+        PreInsertCastAndRename ::
+        flintExtendedRules
 
       override val extendedCheckRules = Seq(
         PreWriteCheck(catalog)
@@ -57,10 +67,4 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
 
   @transient
   override protected[sql] lazy val optimizer: Optimizer = DefaultOptimizer
-
-  /** Extends QueryExecution with flint specific features. */
-  protected[sql] class QueryExecution(logicalPlan: LogicalPlan)
-    extends super.QueryExecution(logicalPlan) {
-
-  }
 }
