@@ -27,6 +27,7 @@ public class UTF8StringHelper {
     if (len == 0) return word;
     int s = 0;
     int e = word.numBytes() - len;
+    // TODO: `matchAt` here may be inefficient, could use KMP to speed up.
     while (s + len <= word.numBytes() && matchAt(word, trimWord, s)) s+=len;
     while (e >= 0 && matchAt(word, trimWord, e)) e-=len;
     if (s > e) {
