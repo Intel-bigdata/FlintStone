@@ -16,19 +16,22 @@
  */
 package org.apache.spark.sql.hive.execution
 
-import org.apache.spark.sql.hive.test.TestHive
+import org.apache.spark.sql.catalyst.planning.PhysicalOperation
+import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.datasources.DescribeCommand
+import org.apache.spark.sql.hive.test.TestFlint
 import java.io._
 
 import com.intel.ssg.bdt.spark.sql.CalciteDialect
 import org.apache.spark.sql.catalyst.util._
-import org.apache.spark.sql.execution.{DescribeFunction, ExplainCommand, ShowFunctions}
+import org.apache.spark.sql.execution.{SetCommand, DescribeFunction, ExplainCommand, ShowFunctions}
 import scala.util.control.NonFatal
 
 class HiveCompSuite extends HiveCompatibilitySuite {
   override def beforeAll() {
     super.beforeAll()
-    TestHive.setConf("spark.sql.dialect", classOf[CalciteDialect].getCanonicalName)
-    TestHive.setConf("spark.sql.caseSensitive", "false")
+    TestFlint.setConf("spark.sql.dialect", classOf[CalciteDialect].getCanonicalName)
+    TestFlint.setConf("spark.sql.caseSensitive", "false")
   }
 
   override def afterAll() {
@@ -2996,7 +2999,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
 
       try {
         if (reset) {
-          TestHive.reset()
+          TestFlint.reset()
         }
 
         val hiveCacheFiles = queryList.zipWithIndex.map {
@@ -3025,7 +3028,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
             hiveCachedResults
           } else {
 
-            val hiveQueries = queryList.map(new TestHive.QueryExecution(_))
+            val hiveQueries = queryList.map(new TestFlint.QueryExecution(_))
             // Make sure we can at least parse everything before attempting hive execution.
             // Note this must only look at the logical plan as we might not be able to analyze if
             // other DDL has not been executed yet.
@@ -3045,7 +3048,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
                     case _: ExplainCommand =>
                       // No need to execute EXPLAIN queries as we don't check the output.
                       Nil
-                    case _ => TestHive.runSqlHive(queryString)
+                    case _ => TestFlint.runSqlHive(queryString)
                   }
 
                   // We need to add a new line to non-empty answers so we can differentiate Seq()
@@ -3068,15 +3071,15 @@ class HiveCompSuite extends HiveCompatibilitySuite {
                     fail(errorMessage)
                 }
             }.toSeq
-            if (reset) { TestHive.reset() }
+            if (reset) { TestFlint.reset() }
 
             computedResults
           }
 
         // Run w/ catalyst
         val catalystResults = queryList.zip(hiveResults).map { case (queryString, hive) =>
-          val query = new TestHive.QueryExecution(queryString)
-          try { (query, prepareAnswer(query, query.stringResult())) } catch {
+          val query = new TestFlint.QueryExecution(queryString)
+          try { (query, prepareAnswerAnswer(query, query.stringResult())) } catch {
             case e: Throwable =>
               val errorMessage =
                 s"""
@@ -3095,7 +3098,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
         (queryList, hiveResults, catalystResults).zipped.foreach {
           case (query, hive, (hiveQuery, catalyst)) =>
             // Check that the results match unless its an EXPLAIN query.
-            val preparedHive = prepareAnswer(hiveQuery, hive)
+            val preparedHive = prepareAnswerAnswer(hiveQuery, hive)
 
             // We will ignore the ExplainCommand, ShowFunctions, DescribeFunction
             if ((!hiveQuery.logical.isInstanceOf[ExplainCommand]) &&
@@ -3117,12 +3120,12 @@ class HiveCompSuite extends HiveCompatibilitySuite {
               // If this query is reading other tables that were created during this test run
               // also print out the query plans and results for those.
               val computedTablesMessages: String = try {
-                val tablesRead = new TestHive.QueryExecution(query).executedPlan.collect {
+                val tablesRead = new TestFlint.QueryExecution(query).executedPlan.collect {
                   case ts: HiveTableScan => ts.relation.tableName
                 }.toSet
 
-                TestHive.reset()
-                val executions = queryList.map(new TestHive.QueryExecution(_))
+                TestFlint.reset()
+                val executions = queryList.map(new TestFlint.QueryExecution(_))
                 executions.foreach(_.toRdd)
                 val tablesGenerated = queryList.zip(executions).flatMap {
                   case (q, e) => e.executedPlan.collect {
@@ -3170,8 +3173,8 @@ class HiveCompSuite extends HiveCompatibilitySuite {
             // okay by running a simple query. If this fails then we halt testing since
             // something must have gone seriously wrong.
             try {
-              new TestHive.QueryExecution("SELECT key FROM src").stringResult()
-              TestHive.runSqlHive("SELECT key FROM src")
+              new TestFlint.QueryExecution("SELECT key FROM src").stringResult()
+              TestFlint.runSqlHive("SELECT key FROM src")
             } catch {
               case e: Exception =>
                 logError(s"FATAL ERROR: Canary query threw $e This implies that the " +
@@ -3187,6 +3190,45 @@ class HiveCompSuite extends HiveCompatibilitySuite {
           throw originalException
       }
     }
+  }
+
+  protected def prepareAnswerAnswer(
+                               hiveQuery: TestFlint.type#QueryExecution,
+                               answer: Seq[String]): Seq[String] = {
+
+    def isSorted(plan: LogicalPlan): Boolean = plan match {
+      case _: Join | _: Aggregate | _: Generate | _: Sample | _: Distinct => false
+      case PhysicalOperation(_, _, Sort(_, true, _)) => true
+      case _ => plan.children.iterator.exists(isSorted)
+    }
+
+    val orderedAnswer = hiveQuery.analyzed match {
+      // Clean out non-deterministic time schema info.
+      // Hack: Hive simply prints the result of a SET command to screen,
+      // and does not return it as a query answer.
+      case _: SetCommand => Seq("0")
+      case HiveNativeCommand(c) if c.toLowerCase.contains("desc") =>
+        answer
+          .filterNot(nonDeterministicLine)
+          .map(_.replaceAll("from deserializer", ""))
+          .map(_.replaceAll("None", ""))
+          .map(_.trim)
+          .filterNot(_ == "")
+      case _: HiveNativeCommand => answer.filterNot(nonDeterministicLine).filterNot(_ == "")
+      case _: ExplainCommand => answer
+      case _: DescribeCommand =>
+        // Filter out non-deterministic lines and lines which do not have actual results but
+        // can introduce problems because of the way Hive formats these lines.
+        // Then, remove empty lines. Do not sort the results.
+        answer
+          .filterNot(r => nonDeterministicLine(r) || ignoredLine(r))
+          .map(_.replaceAll("from deserializer", ""))
+          .map(_.replaceAll("None", ""))
+          .map(_.trim)
+          .filterNot(_ == "")
+      case plan => if (isSorted(plan)) answer else answer.sorted
+    }
+    orderedAnswer.map(cleanPaths)
   }
 
   def mytest(hiveresult: Seq[String], cataresult: Seq[String]) : Boolean = {
