@@ -35,7 +35,10 @@ class FlintContext(sc: SparkContext) extends HiveContext(sc) {
   @transient
   override protected[sql] lazy val functionRegistry: FunctionRegistry = FunctionRegistry.builtin
 
-  val flintExtendedRules: List[Rule[LogicalPlan]] =
+  /**
+   * Returns additional resolution rules for our context. Use def because we may switch dialects.
+   */
+  def flintExtendedRules: List[Rule[LogicalPlan]] =
     if (conf.dialect == classOf[CalciteDialect].getCanonicalName) {
       ResolveNaturalJoin :: Nil
     } else Nil
