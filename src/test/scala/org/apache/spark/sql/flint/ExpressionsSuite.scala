@@ -34,6 +34,16 @@ class ExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
     checkEvaluation(FlintStringTrimRight(Literal("haahh"), Literal("h")), "haa", create_row("habdefh"))
     checkEvaluation(FlintStringTrimRight(s, Literal("h")), "habdef", create_row("habdefh"))
 
+    checkEvaluation(FlintStringTrim(Literal("   aah   "), Literal(" ")), "aah", create_row("habdefh"))
+    checkEvaluation(FlintStringTrimRight(Literal("   aah   "), Literal(" ")), "   aah", create_row("habdefh"))
+    checkEvaluation(FlintStringTrimLeft(Literal("   aah   "), Literal(" ")), "aah   ", create_row("habdefh"))
+
+    checkEvaluation(FlintStringTrim(Literal("   aah   \n"), Literal(" \n")), "   aah  ", create_row("habdefh"))
+
+    checkEvaluation(FlintStringTrim(Literal(" g aah g "), Literal(" g ")), "aah", create_row("habdefh"))
+    checkEvaluation(FlintStringTrimRight(Literal(" g aah g "), Literal(" g ")), " g aah", create_row("habdefh"))
+    checkEvaluation(FlintStringTrimLeft(Literal(" g aah g "), Literal(" g ")), "aah g ", create_row("habdefh"))
+
     // TODO add scalastye and turn it off for non-Ascii
     // non ascii characters are not allowed in the source code, so we disable the scalastyle.
     checkEvaluation(
@@ -46,4 +56,24 @@ class ExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
     checkEvaluation(FlintStringTrimLeft(Literal.create(null, StringType), Literal("abc")), null)
     checkEvaluation(FlintStringTrimRight(Literal("abcde"), Literal.create(null, StringType)), null)
   }
+
+  test("LIKE") {
+    checkEvaluation(FlintLike(Literal("Equal_literal"), Literal("Eq_alS_literal%"), Literal("S")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("Equal_literal"), Literal("Eq%alS_literal"), Literal("S")), true, create_row("\tabdef\t"))
+    //checkEvaluation(FlintLike(Literal("Equal_literal"), Literal("Eq_al_literal%"), Literal("S")), false, create_row("\tabdef\t"))
+
+    checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("\\%ABCDE"), Literal("\\")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("!%ABCDE"), Literal("!")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("#%ABCDE"), Literal("#")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("@%ABCDE"), Literal("@")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("a%ABCDE"), Literal("a")), true, create_row("\tabdef\t"))
+
+    //checkEvaluation(FlintLike(Literal("%ABCDE"), Literal("%%ABCDE"), Literal("%")), true, create_row("\tabdef\t"))
+
+    //difference
+    checkEvaluation(FlintLike(Literal("[^a]ABCDE"), Literal("[^a]ABCDE"), Literal("!")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("[ABCDE"), Literal("[ABCDE"), Literal("!")), true, create_row("\tabdef\t"))
+    checkEvaluation(FlintLike(Literal("]ABCDE"), Literal("]ABCDE"), Literal("!")), true, create_row("\tabdef\t"))
+  }
 }
+
