@@ -50,7 +50,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     //retest natural join
     //"0749", "0750", "0751", "0754", "0755", "0759", "0760", "0894"
     //for nist
-    /*"0000",
+    "0000"/*,
     "0001",
     "0002",
     "0003",
