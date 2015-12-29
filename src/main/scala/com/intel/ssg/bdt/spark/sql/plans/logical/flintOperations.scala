@@ -16,7 +16,7 @@
  */
 package com.intel.ssg.bdt.spark.sql.plans.logical
 
-import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical.{BinaryNode, LogicalPlan}
 import org.apache.spark.sql.types.BooleanType
@@ -28,21 +28,39 @@ case class NaturalJoin(
   condition: Option[Expression]) extends BinaryNode {
 
   override def output: Seq[Attribute] = {
-    val leftNames = left.output.map(_.name)
-    val rightNames = right.output.map(_.name)
-    val commonNames = leftNames.intersect(rightNames)
-    val commonOutput = left.output.filter(att => commonNames.contains(att.name))
     val lUniqueOutput = left.output.filterNot(att => commonNames.contains(att.name))
     val rUniqueOutput = right.output.filterNot(att => commonNames.contains(att.name))
     joinType match {
       case LeftOuter =>
-        commonOutput ++ lUniqueOutput ++ rUniqueOutput.map(_.withNullability(true))
+        commonOutputFromLeft ++ lUniqueOutput ++ rUniqueOutput.map(_.withNullability(true))
       case RightOuter =>
-        commonOutput ++ lUniqueOutput.map(_.withNullability(true)) ++ rUniqueOutput
+        val commonOutputFromRight =
+          commonNames.map(cn => right.output.find(att => att.name == cn).get)
+        commonOutputFromRight ++ lUniqueOutput.map(_.withNullability(true)) ++ rUniqueOutput
       case FullOuter =>
-        commonOutput ++ (lUniqueOutput ++ rUniqueOutput).map(_.withNullability(true))
+        // here use left as a place holder
+        commonOutputFromLeft ++ (lUniqueOutput ++ rUniqueOutput).map(_.withNullability(true))
       case _ =>
-        commonOutput ++ lUniqueOutput ++ rUniqueOutput
+        commonOutputFromLeft ++ lUniqueOutput ++ rUniqueOutput
+    }
+  }
+
+  @transient private val leftNames = left.output.map(_.name)
+  @transient private val rightNames = right.output.map(_.name)
+  @transient private val commonNames = leftNames.intersect(rightNames)
+  @transient
+  private val commonOutputFromLeft = left.output.filter(att => commonNames.contains(att.name))
+
+  def outerProjectList: Seq[NamedExpression] = {
+    if (joinType == FullOuter) {
+      val commonOutputFromRight = commonNames.map(cn => right.output.find(att => att.name == cn).get)
+      val commonPairs = commonOutputFromLeft.zip(commonOutputFromRight)
+      val commonOutputExp = commonPairs.map {
+        case (l: Attribute, r: Attribute) => Alias(CaseWhen(Seq(IsNull(l), r, l)), l.name)()
+      }
+      commonOutputExp ++ output.takeRight(output.size - commonOutputExp.size)
+    } else {
+      output
     }
   }
 

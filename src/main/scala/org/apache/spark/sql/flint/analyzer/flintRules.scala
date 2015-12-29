@@ -35,6 +35,6 @@ object ResolveNaturalJoin extends Rule[LogicalPlan] {
       val newCondition = (condition ++ joinPairs.map {
         case (l, r) => EqualTo(l, r)
       }).reduceLeftOption(And)
-      Project(j.output, Join(left, right, joinType, newCondition))
+      Project(j.outerProjectList, Join(left, right, joinType, newCondition))
   }
 }
