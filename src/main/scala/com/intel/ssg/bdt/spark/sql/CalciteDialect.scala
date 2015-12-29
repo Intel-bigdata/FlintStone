@@ -2,11 +2,11 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to you under the Apache License, Version 2.0
+ * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ class CalciteDialect extends ParserDialect with Logging {
       if (CalciteConf.strictMode) {
         sys.error("Parse failed.")
       } else {
-        log.info("Using origin parser.")	
+        log.info("Using origin parser.")
         sqlParser.parse(sqlText)
       }
     })
@@ -45,23 +45,25 @@ class CalciteDialect extends ParserDialect with Logging {
     val tree: Option[SqlNode] =
       Try(Some(Frameworks.getPlanner(config).parse(sqlText))).getOrElse(None)
     if (tree.isEmpty) {
-      /*if (sqlText.startsWith("SELECT"))
-        println("attention!!!")
-      else 
-        log.warn("Failed with Calcite parser, falling back")
-      Some(hqlParser.parse(sqlText))*/
       val hlp = hqlParser.parse(sqlText)
-      if (!hlp.isInstanceOf[Command])
+      if (!hlp.isInstanceOf[Command]) {
+        // scalastyle:off println
         println(sqlText + "failed.")
+        // scalastyle:on println
+      }
       Some(hlp)
     } else {
+      // scalastyle:off println
       println("Calcite parsing passed, start to transform. " + sqlText)
+      // scalastyle:on println
       val worker = new CalSqlWorker(tree.get)
       val result = Try(Some(worker.getLogicalPlan)).getOrElse(None)
 
-      if (result.isEmpty)
+      if (result.isEmpty) {
+        // scalastyle:off println
         println("calcite cannot do " + sqlText)
-
+        // scalastyle:on println
+      }
       result
     }
   }

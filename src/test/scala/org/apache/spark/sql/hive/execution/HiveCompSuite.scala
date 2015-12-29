@@ -2953,7 +2953,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
       case (shardId, _) => logDebug(s"Shard $shardId includes test '$testCaseName'")
     }
 
-    // Skip tests found in directories specified by user.  
+    // Skip tests found in directories specified by user.
       skipDirectories
         .map(new File(_, testCaseName))
         .filter(_.exists)

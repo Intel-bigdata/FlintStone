@@ -2,11 +2,11 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to you under the Apache License, Version 2.0
+ * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,10 +33,10 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 import com.intel.ssg.bdt.spark.sql.catalyst.expressions.{FlintLike, FlintStringTrim, FlintStringTrimLeft, FlintStringTrimRight}
 
-//support select and insert both
+// support select and insert both
 class CalSqlWorker(sqlNode: SqlNode) {
-  //val calparser: calParser = new calParser()
-  //val sqlNode: SqlNode = calparser.getSqlNode(input)
+  // val calparser: calParser = new calParser()
+  // val sqlNode: SqlNode = calparser.getSqlNode(input)
 
   def getLogicalPlan: LogicalPlan = {
     nodeToPlan(sqlNode)
@@ -60,11 +60,13 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
         for (index <- 0 until asNodeList.size()){
           val Item = asNodeList.get(index).asInstanceOf[SqlWithItem]
-          withList += Tuple2(Item.name.getSimple, Subquery(Item.name.getSimple, nodeToPlan(Item.query)))
+          withList +=
+            Tuple2(Item.name.getSimple, Subquery(Item.name.getSimple, nodeToPlan(Item.query)))
         }
         With(bodyPlan, withList.toMap)
 
-      case AS => //becasue it's the as type so that there must be some node in right node
+      case AS =>
+        // becasue it's the as type so that there must be some node in right node
         val as_sqlnode = subSqlNode.asInstanceOf[SqlBasicCall]
         val leftNode = as_sqlnode.getOperandList.get(0)
         val rightNode = as_sqlnode.getOperandList.get(1).asInstanceOf[SqlIdentifier]
@@ -72,12 +74,15 @@ class CalSqlWorker(sqlNode: SqlNode) {
         if (rightNode.isSimple || rightNode.isStar) {
           leftNode.getKind.name() match {
             case IDENTIFIER =>
-              UnresolvedRelation(leftNode.asInstanceOf[SqlIdentifier].names, if (rightNode == null) None else Some(rightNode.getSimple))
+              UnresolvedRelation(
+                leftNode.asInstanceOf[SqlIdentifier].names,
+                if (rightNode == null) None else Some(rightNode.getSimple))
             case _ =>
               Subquery(rightNode.getSimple, nodeToPlan(leftNode))
           }
-        }else
+        } else {
           sys.error("wrong \'AS\' input.")
+        }
 
       case ORDER_BY =>
         dealWithOrderByNode(subSqlNode.asInstanceOf[SqlOrderBy])
@@ -86,10 +91,10 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val basicallnode = subSqlNode.asInstanceOf[SqlBasicCall]
         val leftnode = basicallnode.getOperandList.get(0)
         val rightnode = basicallnode.getOperandList.get(1)
-        if (basicallnode.getOperator.getName.equals(UNION))
-          Distinct(Union(nodeToPlan(leftnode), nodeToPlan(rightnode)))
-        else
-          Union(nodeToPlan(leftnode), nodeToPlan(rightnode))
+        basicallnode.getOperator.getName match {
+          case UNION => Distinct(Union(nodeToPlan(leftnode), nodeToPlan(rightnode)))
+          case _ => Union(nodeToPlan(leftnode), nodeToPlan(rightnode))
+        }
 
       case INTERSECT =>
         val basicallnode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -111,43 +116,54 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val insertNode = subSqlNode.asInstanceOf[SqlInsert]
         val tableDest = insertNode.getTargetTable
         val subSelectNode = insertNode.getSource
-        InsertIntoTable(nodeToPlan(tableDest), Map.empty[String, Option[String]], nodeToPlan(subSelectNode), false, false)
+        InsertIntoTable(
+          nodeToPlan(tableDest),
+          Map.empty[String, Option[String]],
+          nodeToPlan(subSelectNode), overwrite = false, ifNotExists = false)
 
       case _ =>
         sys.error("TODO")
     }
   }
 
-  //sqlbasiccall && literal && identifier
+  // sqlbasiccall && literal && identifier
   def nodeToExpr(subSqlNode: SqlNode) : Expression = {
     val nodeType = subSqlNode.getKind.name()
 
     nodeType match {
       case AS =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
-        val leftNode = nodeToExpr(basicCallNode.getOperandList.get(0))//expr
-        val rightNode = basicCallNode.getOperandList.get(1).asInstanceOf[SqlIdentifier]//ident
+        val leftNode = nodeToExpr(basicCallNode.getOperandList.get(0)) // expr
+        val rightNode = basicCallNode.getOperandList.get(1).asInstanceOf[SqlIdentifier] // ident
 
-        if (rightNode.isSimple)
+        if (rightNode.isSimple) {
           Alias(leftNode, rightNode.getSimple)()
-        else
+        } else {
           sys.error("wrong as input.")
+        }
 
       case TRIM =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         if (basicCallNode.getOperandList.size() == 3) {
           basicCallNode.getOperandList.get(0).asInstanceOf[SqlLiteral].toValue match {
             case BOTH =>
-              FlintStringTrim(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+              FlintStringTrim(
+                nodeToExpr(basicCallNode.getOperandList.get(2)),
+                nodeToExpr(basicCallNode.getOperandList.get(1)))
             case LEADING =>
-              FlintStringTrimLeft(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+              FlintStringTrimLeft(
+                nodeToExpr(basicCallNode.getOperandList.get(2)),
+                nodeToExpr(basicCallNode.getOperandList.get(1)))
             case TRAILING =>
-              FlintStringTrimRight(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+              FlintStringTrimRight(
+                nodeToExpr(basicCallNode.getOperandList.get(2)),
+                nodeToExpr(basicCallNode.getOperandList.get(1)))
             case _ =>
               sys.error("unsupported trim expression")
           }
-        }else
+        } else {
           sys.error("unsupported trim expression")
+        }
 
       case TIMES =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -224,14 +240,15 @@ class CalSqlWorker(sqlNode: SqlNode) {
           val Y = operandList.get(1)
           val Z = operandList.get(2)
 
-          val andExpr = And(GreaterThanOrEqual(nodeToExpr(X), nodeToExpr(Y)), LessThanOrEqual(nodeToExpr(X), nodeToExpr(Z)))
+          val andExpr = And(GreaterThanOrEqual(
+            nodeToExpr(X), nodeToExpr(Y)), LessThanOrEqual(nodeToExpr(X), nodeToExpr(Z)))
 
           if (operator.getName.equals("BETWEEN")){
             andExpr
-          }else{
+          } else {
             Not(andExpr)
           }
-        }else{
+        } else {
           sys.error("wrong input, check \"BETWEEN\" usage.")
         }
 
@@ -252,28 +269,29 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val operator = basicCallNode.getOperator
         val leftNode = basicCallNode.getOperandList.get(0)
         val rightNode = basicCallNode.getOperandList.get(1)
-        if (operator.getName.equals(OTHER_OR)){
-          ConcatWs(Literal("") +: basicCallNode.getOperandList.map(nodeToExpr))
+        operator.getName match {
+          case OTHER_OR => ConcatWs(Literal("") +: basicCallNode.getOperandList.map(nodeToExpr))
+          case _ => sys.error("not support now.")
         }
-        else
-          sys.error("not support now.")
 
       case LIKE =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
 
-        val likeExpr =
-          if (basicCallNode.getOperandList.size() == 2)
-            Like(nodeToExpr(basicCallNode.getOperandList.get(0)), nodeToExpr(basicCallNode.getOperandList.get(1)))
-          else if (basicCallNode.getOperandList.size() == 3)
-            FlintLike(nodeToExpr(basicCallNode.getOperandList.get(0)), nodeToExpr(basicCallNode.getOperandList.get(1)), nodeToExpr(basicCallNode.getOperandList.get(2)))
-          else
-            sys.error("unsupported like usage")
-
-        if (operator.getName.equals("LIKE"))
-          likeExpr
-        else
-          Not(likeExpr)
+        val likeExpr = basicCallNode.getOperandList.size match {
+          case 2 =>
+            // TODO use map here
+            Like(
+              nodeToExpr(basicCallNode.getOperandList.get(0)),
+              nodeToExpr(basicCallNode.getOperandList.get(1)))
+          case 3 =>
+            FlintLike(
+              nodeToExpr(basicCallNode.getOperandList.get(0)),
+              nodeToExpr(basicCallNode.getOperandList.get(1)),
+              nodeToExpr(basicCallNode.getOperandList.get(2)))
+          case _ => sys.error("unsupported like usage")
+        }
+        if (operator.getName.equals("LIKE")) likeExpr else Not(likeExpr)
 
       case IN =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -283,15 +301,13 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
         if (basicCallNode.getOperandList.get(1).getKind.name().equals(SELECT)){
           sys.error("TODO")
-        }else{
-          val rightNodeList = basicCallNode.getOperandList.get(1).asInstanceOf[SqlNodeList]//must be a list
+        } else {
+          val rightNodeList = basicCallNode.getOperandList.get(1).asInstanceOf[SqlNodeList]
+          // must be a list
           val rightSeq = rightNodeList.map(nodeToExpr)
 
           val inExpr = In(nodeToExpr(leftNode), rightSeq.toSeq)
-          if (operator.getName.equals("IN"))
-            inExpr
-          else
-            Not(inExpr)
+          if (operator.getName.equals("IN")) inExpr else Not(inExpr)
         }
 
       case IS_NOT_NULL =>
@@ -321,18 +337,16 @@ class CalSqlWorker(sqlNode: SqlNode) {
           }
 
           val branchs =
-            if (elseLiter.toValue == null)
-              whenSeq
-            else
-              whenSeq += nodeToExpr(elseLiter)
+            if (elseLiter.toValue == null) whenSeq else whenSeq += nodeToExpr(elseLiter)
 
           CaseWhen(branchs)
-        }else
+        } else {
           sys.error("wrong input, check \"CASE WHEN\" usage.")
+        }
 
       case CAST =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
-        //val operator = basicCallNode.getOperator
+        // val operator = basicCallNode.getOperator
         val left = basicCallNode.getOperandList.get(0)
         val right = basicCallNode.getOperandList.get(1)
 
@@ -343,7 +357,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
             case CHAR => StringType
             case TIMESTAMP => TimestampType
             case DOUBLE => DoubleType
-            //case FIXEDDECIMALTYPE =>
+            // case FIXEDDECIMALTYPE =>
             case DECIMAL =>
               val precision = right.asInstanceOf[SqlDataTypeSpec].getPrecision
               var scale = right.asInstanceOf[SqlDataTypeSpec].getScale
@@ -354,7 +368,8 @@ class CalSqlWorker(sqlNode: SqlNode) {
             case LONG => LongType
             case BOOL => BooleanType
             case BINARY => BinaryType
-            case _ => sys.error("TODO, other datatype may not be valided for calcite or spark now.")
+            case _ =>
+              sys.error("TODO, other datatype may not be valided for calcite or spark now.")
           }
 
         Cast(nodeToExpr(left), datatype)
@@ -363,10 +378,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
         val operand = basicCallNode.getOperandList.get(0)
-        if (operator.getName equals "-")
-          UnaryMinus(nodeToExpr(operand))
-        else
-          nodeToExpr(operand)
+        if (operator.getName equals "-") UnaryMinus(nodeToExpr(operand)) else nodeToExpr(operand)
 
       case PLUS_PREFIX =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -381,10 +393,11 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val operand = basicCallNode.getOperandList
         val functionName = operator.getName
 
-        if (functionName.equals(EXTRACT)){
+        if (functionName.equals(EXTRACT)) {
           val extraction = operand.get(0).asInstanceOf[SqlIntervalQualifier].timeUnitRange.name()
           val child = UnresolvedAttribute(operand.get(1).asInstanceOf[SqlIdentifier].names)
-          //UnresolvedExtractValue(UnresolvedAttribute(child), UnresolvedAttribute.quoted(extraction))
+          // UnresolvedExtractValue(
+          //   UnresolvedAttribute(child), UnresolvedAttribute.quoted(extraction))
           extraction match {
             case HOUR => Hour(child)
             case MINUTE => Minute(child)
@@ -392,164 +405,86 @@ class CalSqlWorker(sqlNode: SqlNode) {
             case MONTH => Month(child)
             case YEAR => Year(child)
           }
-        }
-        else if (functionName.equals(NULLIF) && operand.size() == 2){
+        } else if (functionName.equals(NULLIF) && operand.size() == 2) {
           val whenele = EqualTo(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)))
           val thenele = Literal.create(null, NullType)
           val elseele = nodeToExpr(operand.get(0))
 
           CaseWhen(Seq(whenele, thenele, elseele))
-        }
-        else if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(0).asInstanceOf[SqlIdentifier].isStar){
-          if (functionName.equals(COUNT) && operand.size() == 1)
+        } else if (operand.get(0).isInstanceOf[SqlIdentifier] && operand.get(
+          0).asInstanceOf[SqlIdentifier].isStar) {
+          if (functionName.equals(COUNT) && operand.size() == 1) {
             Count(Literal(1))
-          else
+          } else {
             sys.error("invalid expression")
-        }else{
+          }
+        } else {
           if (isdistinct != null && isdistinct.getValue.toString.equals(DISTINCT)){
             functionName match {
               case SUM => SumDistinct(nodeToExpr(operand.get(0)))
               case COUNT => CountDistinct(operand.map(nodeToExpr))
               case _ => UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = true)
             }
-          }
-          else{
+          } else {
             UnresolvedFunction(functionName, operand.map(nodeToExpr), isDistinct = false)
           }
         }
 
-        /*val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
-        val operator = basicCallNode.getOperator
-        val operand = basicCallNode.getOperandList
-
-        operator.getName match {
-          case ITEM_FUNCTION =>
-            UnresolvedExtractValue(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)))
-
-          case SUM =>
-            if (basicCallNode.getFunctionQuantifier == null)
-              Sum(nodeToExpr(operand.get(0)))
-            else
-              SumDistinct(nodeToExpr(operand.get(0)))
-
-          case COUNT =>
-            //count(*), count(a), count(distinct a, b)
-            if (basicCallNode.getFunctionQuantifier == null){
-              val distinctExpr = operand.get(0).asInstanceOf[SqlIdentifier]
-              if (distinctExpr.isStar && distinctExpr.names.size() == 1)
-                Count(Literal(1))
-              //                                if (distinctExpr.names.size() == 1)
-              //                                    Count(Literal(1))
-              //                                else
-              //                                    sys.error("TODO")
-              else
-                Count(nodeToExpr(distinctExpr))
-            }else {
-              var distinctSeq = operand.map(nodeToExpr)
-              CountDistinct(distinctSeq)
-            }
-
-          case FIRST =>
-            First(nodeToExpr(operand.get(0)))
-
-          case LAST =>
-            Last(nodeToExpr(operand.get(0)))
-
-          case AVG =>
-            Average(nodeToExpr(operand.get(0)))
-
-          case MIN =>
-            Min(nodeToExpr(operand.get(0)))
-
-          case MAX =>
-            Max(nodeToExpr(operand.get(0)))
-
-          case UPPER =>
-            Upper(nodeToExpr(operand.get(0)))
-
-          case LOWER =>
-            Lower(nodeToExpr(operand.get(0)))
-
-          case IF =>
-            if (operand.size() == 3)
-              If(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), nodeToExpr(operand.get(2)))
-            else
-              sys.error("YOUR INPUT IS INVALID, PLEASE CHECK.")
-
-          case SUBSTR | SUBSTRING =>
-            if (operand.size() == 2)
-              Substring(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), Literal(Integer.MAX_VALUE))
-            else if(operand.size() == 3)
-              Substring(nodeToExpr(operand.get(0)), nodeToExpr(operand.get(1)), nodeToExpr(operand.get(2)))
-            else
-              sys.error("YOUR INPUT IS INVALID, PLEASE CHECK.")
-
-          case COALESCE =>
-            if (operand.size() > 0)
-              Coalesce(operand.map(nodeToExpr))
-            else
-              sys.error("YOUR INPUT IS NOT SUITABLE, PLEASE CHECK.")
-
-          case SQRT =>
-            Sqrt(nodeToExpr(operand.get(0)))
-
-          case ABS =>
-            Abs(nodeToExpr(operand.get(0)))
-
-          case _ =>
-            println("user-defined function.")
-            //here maybe distinct
-            UnresolvedFunction(operator.getName, operand.map(nodeToExpr), isDistinct = true)
-        }*/
-
       case IDENTIFIER =>
         val identiNode = subSqlNode.asInstanceOf[SqlIdentifier]
-        if (identiNode.isStar)
-          if (identiNode.names.size() == 1)
+        if (identiNode.isStar) {
+          if (identiNode.names.size() == 1) {
             UnresolvedStar(None)
-          else if (identiNode.names.size() == 2)
+          } else if (identiNode.names.size() == 2) {
             UnresolvedStar(Option(identiNode.names.get(0)))
-          else
+          } else {
             sys.error("wrong select input.")
-        else{
-          if (identiNode.isSimple)
+          }
+        } else {
+          if (identiNode.isSimple) {
             UnresolvedAttribute.quoted(identiNode.getSimple)
-//          else if (identiNode.names.size() == 2)
-//            UnresolvedExtractValue(UnresolvedAttribute.quoted(identiNode.names.get(0)), Literal(identiNode.names.get(1)))
-//            UnresolvedAttribute(identiNode.names.mkString("."))
-          else
+            // } else if (identiNode.names.size() == 2) {
+            //   UnresolvedExtractValue(
+            //     UnresolvedAttribute.quoted(identiNode.names.get(0)),
+            //     Literal(identiNode.names.get(1)))
+            //   UnresolvedAttribute(identiNode.names.mkString("."))
+          } else {
             UnresolvedAttribute(identiNode.names.mkString("."))
+          }
         }
 
       case _ => nodeToLiteral(subSqlNode)
     }
   }
 
-  //literal
+  // literal
   def nodeToLiteral(literalSqlNode : SqlNode) : Expression = {
     val literalNode = literalSqlNode.asInstanceOf[SqlLiteral]
     literalNode.getTypeName match {
       case SqlTypeName.NULL => Literal.create(null, NullType)
 
       case SqlTypeName.BOOLEAN =>
-        if (literalNode.booleanValue())
+        if (literalNode.booleanValue()) {
           Literal.create(true, BooleanType)
-        else
+        } else {
           Literal.create(false, BooleanType)
+        }
 
       case SqlTypeName.DECIMAL | SqlTypeName.DOUBLE =>
         val numeriLit = literalNode.asInstanceOf[SqlNumericLiteral]
-        if (numeriLit.getScale == 0){//int
-          val intvalue = scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
+        if (numeriLit.getScale == 0) {
+          // int
+          val intvalue =
+            scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
           val intresult = intvalue match {
             case v if intvalue.isValidInt => v.toIntExact
             case v if intvalue.isValidLong => v.toLongExact
             case v => v.underlying()
           }
-          Literal(intresult) 
-        }
-        else{
-          val doublevalue = scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
+          Literal(intresult)
+        } else {
+          val doublevalue =
+            scala.math.BigDecimal(numeriLit.getValue.asInstanceOf[java.math.BigDecimal])
           Literal(doublevalue.underlying())
         }
 
@@ -557,7 +492,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
         Literal.create(literalNode.getStringValue, StringType)
       //            case SqlTypeName.BINARY => {}
       //            case SqlTypeName.TIME => {}
-      
+
       case SqlTypeName.INTERVAL_YEAR_MONTH =>
         val year_or_month = literalNode.getValue.asInstanceOf[SqlIntervalLiteral.IntervalValue]
         val monthSum = year_or_month.getIntervalQualifier.timeUnitRange.name() match {
@@ -569,10 +504,14 @@ class CalSqlWorker(sqlNode: SqlNode) {
       case SqlTypeName.INTERVAL_DAY_TIME =>
         val time_in_day = literalNode.getValue.asInstanceOf[SqlIntervalLiteral.IntervalValue]
         val secondSum = time_in_day.getIntervalQualifier.timeUnitRange.name() match {
-          case DAY => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_DAY
-          case HOUR => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_HOUR
-          case MINUTE => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_MINUTE
-          case SECOND => time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_SECOND
+          case DAY =>
+            time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_DAY
+          case HOUR =>
+            time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_HOUR
+          case MINUTE =>
+            time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_MINUTE
+          case SECOND =>
+            time_in_day.getIntervalLiteral.toDouble.toLong * CalendarInterval.MICROS_PER_SECOND
         }
         Literal.create(new CalendarInterval(0, secondSum), CalendarIntervalType)
 
@@ -589,58 +528,47 @@ class CalSqlWorker(sqlNode: SqlNode) {
       case _ =>
         sys.error("TODO")
     }
-  }//ok
+  } // ok
 
   def  dealWithSelectNode(selectNode: SqlSelect) : LogicalPlan = {
     val withHaving = prepareSelect(selectNode)
 
-    val limitNode = selectNode.getFetch//limit expression
+    val limitNode = selectNode.getFetch // limit expression
 
-    val withLimit =
-      if (limitNode == null)
-        withHaving
-      else
-        Limit(nodeToExpr(limitNode), withHaving)
+    val withLimit = if (limitNode == null) withHaving else Limit(nodeToExpr(limitNode), withHaving)
 
     withLimit
   }
 
-  def prepareSelect(selectNode: SqlSelect): LogicalPlan ={
-    val isDistinct = selectNode.isDistinct//distinct
-    val selectNodeList = selectNode.getSelectList// select projection(as) : SqlNodeList
-    val fromNode = selectNode.getFrom// from relations
-    val whereNode = selectNode.getWhere// where expression
-    val groupByNodeList = selectNode.getGroup// group by expression
-    val havingNode = selectNode.getHaving// having expresssion
+  def prepareSelect(selectNode: SqlSelect): LogicalPlan = {
+    val isDistinct = selectNode.isDistinct // distinct
+    val selectNodeList = selectNode.getSelectList // select projection(as) : SqlNodeList
+    val fromNode = selectNode.getFrom // from relations
+    val whereNode = selectNode.getWhere // where expression
+    val groupByNodeList = selectNode.getGroup // group by expression
+    val havingNode = selectNode.getHaving // having expresssion
 
     val base = nodeToPlan(fromNode)
 
-    val withFilter =
-      if (whereNode == null)
-        base
-      else
-        Filter(nodeToExpr(whereNode), base)
+    val withFilter = if (whereNode == null) base else Filter(nodeToExpr(whereNode), base)
 
     val withProjection =
-      if (groupByNodeList == null)
-        //Project(assignAliases(selectNodeList.map(nodeToExpr).toSeq), withFilter)
+      if (groupByNodeList == null) {
+        // Project(assignAliases(selectNodeList.map(nodeToExpr).toSeq), withFilter)
         Project(selectNodeList.getList.map(nodeToExpr).map(UnresolvedAlias), withFilter)
-      else{
+      } else {
         val list = groupByNodeList.getList.map(nodeToExpr)
         Aggregate(list, selectNodeList.getList.map(nodeToExpr).map(UnresolvedAlias), withFilter)
       }
 
-    val withDistinct =
-      if (isDistinct)
-        Distinct(withProjection)
-      else
-        withProjection
+    val withDistinct = if (isDistinct) {
+      Distinct(withProjection)
+    } else {
+      withProjection
+    }
 
     val withHavnig =
-      if (havingNode == null)
-        withDistinct
-      else
-        Filter(nodeToExpr(havingNode), withDistinct)
+      if (havingNode == null) withDistinct else Filter(nodeToExpr(havingNode), withDistinct)
 
     withHavnig
   }
@@ -671,16 +599,18 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
     if (conditionType.name().equals(USING)){
       val condition = sqlnode.getCondition.asInstanceOf[SqlNodeList]
-      if (left.isInstanceOf[SqlIdentifier] && right.isInstanceOf[SqlIdentifier]){
+      if (left.isInstanceOf[SqlIdentifier] && right.isInstanceOf[SqlIdentifier]) {
         var conditionBuf = ListBuffer[Expression]()
         for (ele <- condition){
           val elename = ele.asInstanceOf[SqlIdentifier].names.get(0)
           val leftname = left.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
           val rightname = right.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
-          println(leftname,rightname)
-          //first each make an equal
+          // scalastyle:off println
+          println(leftname, rightname)
+          // scalastyle:on println
+          // first each make an equal
           val equalExpr = EqualTo(UnresolvedAttribute(leftname), UnresolvedAttribute(rightname))
-          //add expr to buf
+          // add expr to buf
           conditionBuf += equalExpr
         }
 
@@ -690,10 +620,10 @@ class CalSqlWorker(sqlNode: SqlNode) {
         } else {
           Join(nodeToPlan(left), nodeToPlan(right), jt, Option(expressionPara))
         }
-
-      }else
+      } else {
         sys.error("subquery and using not support!")
-    }else{
+      }
+    } else {
       val condition = sqlnode.getCondition
       if (isNatural) {
         NaturalJoin(
@@ -712,19 +642,21 @@ class CalSqlWorker(sqlNode: SqlNode) {
   }
 
   def combineAdd(exprList: ListBuffer[Expression]) : Expression = {
-    if (exprList.size == 1)
+    if (exprList.size == 1) {
       exprList.get(0)
-    else if (exprList.size == 2)
+    } else if (exprList.size == 2) {
       And(exprList.get(0), exprList.get(1))
-    else{
+    } else {
       val first = exprList.remove(0)
+      // scalastyle:off println
       println(exprList)
+      // scalastyle:on println
       And(first, combineAdd(exprList))
     }
   }
 
   def  dealWithOrderByNode(sqlnode: SqlOrderBy) : LogicalPlan = {
-    //especially fetch to get limit
+    // especially fetch to get limit
     val query = sqlnode.query.asInstanceOf[SqlSelect]
     val selectList = query.getSelectList
     val orderList = sqlnode.orderList
@@ -737,32 +669,30 @@ class CalSqlWorker(sqlNode: SqlNode) {
         case DESCENDING =>
           val descNode = ele.asInstanceOf[SqlBasicCall]
           val operand = descNode.getOperandList.get(0)
-          if (operand.isInstanceOf[SqlIdentifier])
+          if (operand.isInstanceOf[SqlIdentifier]) {
             orderSeq += SortOrder(nodeToExpr(operand), Descending)
-          else{
+          } else {
             val index = operand.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
-            //if ident and else expr
-            if (selectList.get(index).getKind.name().equals(IDENTIFIER))
-              orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Descending)
-            else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
-              orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Descending)
-            else
-              orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
+            // if ident and else expr
+            orderSeq += {selectList.get(index).getKind.name() match {
+              case IDENTIFIER => SortOrder(nodeToExpr(selectList.get(index)), Descending)
+              case OTHER_FUNCTION => SortOrder(UnresolvedAttribute(s"c$index"), Descending)
+              case _ => SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
+            }}
           }
 
         case IDENTIFIER =>
-          //val IdenNode = ele.asInstanceOf[SqlIdentifier]
+          // val IdenNode = ele.asInstanceOf[SqlIdentifier]
           orderSeq += SortOrder(nodeToExpr(ele), Ascending)
 
         case LITERAL =>
           val index = ele.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
-          //if ident and else expr
-          if (selectList.get(index).getKind.name().equals(IDENTIFIER))
-            orderSeq += SortOrder(nodeToExpr(selectList.get(index)), Ascending)
-          else if (selectList.get(index).getKind.name().equals(OTHER_FUNCTION))
-            orderSeq += SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
-          else
-            orderSeq += SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
+          // if ident and else expr
+          orderSeq += {selectList.get(index).getKind.name() match {
+            case IDENTIFIER => SortOrder(nodeToExpr(selectList.get(index)), Ascending)
+            case OTHER_FUNCTION => SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
+            case _ => SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
+          }}
 
         case _ =>
           sys.error("order by error. pls check.")
@@ -771,13 +701,9 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
     val withOrder = Sort(orderSeq, true, withHaving)
 
-    val limitNode = sqlnode.fetch//limit expression
+    val limitNode = sqlnode.fetch // limit expression
 
-    val withLimit =
-      if (limitNode == null)
-        withOrder
-      else
-        Limit(nodeToExpr(limitNode), withOrder)
+    val withLimit = if (limitNode == null) withOrder else Limit(nodeToExpr(limitNode), withOrder)
 
     withLimit
   }
