@@ -31,6 +31,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.types._
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
+import com.intel.ssg.bdt.spark.sql.catalyst.expressions.{FlintLike, FlintStringTrim, FlintStringTrimLeft, FlintStringTrimRight}
 
 //support select and insert both
 class CalSqlWorker(sqlNode: SqlNode) {
@@ -131,6 +132,22 @@ class CalSqlWorker(sqlNode: SqlNode) {
           Alias(leftNode, rightNode.getSimple)()
         else
           sys.error("wrong as input.")
+
+      case TRIM =>
+        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
+        if (basicCallNode.getOperandList.size() == 3) {
+          basicCallNode.getOperandList.get(0).asInstanceOf[SqlLiteral].toValue match {
+            case BOTH =>
+              FlintStringTrim(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+            case LEADING =>
+              FlintStringTrimLeft(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+            case TRAILING =>
+              FlintStringTrimRight(nodeToExpr(basicCallNode.getOperandList.get(2)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+            case _ =>
+              sys.error("unsupported trim expression")
+          }
+        }else
+          sys.error("unsupported trim expression")
 
       case TIMES =>
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
@@ -245,7 +262,14 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
 
-        val likeExpr = Like(nodeToExpr(basicCallNode.getOperandList.get(0)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+        val likeExpr =
+          if (basicCallNode.getOperandList.size() == 2)
+            Like(nodeToExpr(basicCallNode.getOperandList.get(0)), nodeToExpr(basicCallNode.getOperandList.get(1)))
+          else if (basicCallNode.getOperandList.size() == 3)
+            FlintLike(nodeToExpr(basicCallNode.getOperandList.get(0)), nodeToExpr(basicCallNode.getOperandList.get(1)), nodeToExpr(basicCallNode.getOperandList.get(2)))
+          else
+            sys.error("unsupported like usage")
+
         if (operator.getName.equals("LIKE"))
           likeExpr
         else

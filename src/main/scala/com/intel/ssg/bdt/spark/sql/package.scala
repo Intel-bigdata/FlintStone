@@ -45,6 +45,11 @@ package object sql {
   val WITH = "WITH"
   val AS = "AS"
 
+  val TRIM = "TRIM"
+  val BOTH = "BOTH"
+  val LEADING = "LEADING"
+  val TRAILING = "TRAILING"
+
   val TIMES = "TIMES"
   val DIVIDE = "DIVIDE"
   val PLUS = "PLUS"
