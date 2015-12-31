@@ -16,6 +16,9 @@
  */
 package org.apache.spark.sql.hive.execution
 
+import org.apache.spark.sql.catalyst.analysis.{Exists, UnresolvedAttribute, UnresolvedRelation, InSubquery}
+import org.apache.spark.sql.catalyst.expressions.EqualTo
+import org.apache.spark.sql.catalyst.plans.logical.{Project, Filter}
 import org.apache.spark.sql.hive.test.TestFlint
 import org.apache.spark.sql.hive.test.TestFlint._
 import org.apache.spark.sql.hive.test.TestFlint.implicits._
@@ -47,5 +50,51 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
 
   test("trim") {
     assert(true)
+  }
+
+  test("sub query predicates in / exists") {
+    val nt1 = sparkContext.parallelize(1 to 3).map(x => (x, x + 1)).toDF("x", "y")
+    nt1.registerTempTable("nt1")
+    val nt2 = sparkContext.parallelize(1 to 4).map(x => (x, 0 - x)).toDF("x", "z")
+    nt2.registerTempTable("nt2")
+
+    val expected =
+      Row(1, 2, -1) ::
+        Row(2, 3, -2) ::
+        Row(3, 4, -3) :: Nil
+
+    val x = UnresolvedAttribute("x")
+    val y = UnresolvedAttribute("y")
+    val z = UnresolvedAttribute("z")
+    val ut1 = UnresolvedRelation("nt1" :: Nil)
+    val ut2 = UnresolvedRelation("nt2" :: Nil)
+
+    val ut1x = UnresolvedAttribute("nt1.x")
+    val ut2x = UnresolvedAttribute("nt2.x")
+
+    checkAnswer(
+      Filter(InSubquery(x, Project(x :: Nil, ut1), true), Project(x :: z :: Nil, ut2)),
+      Row(1, -1) :: Row(2, -2) :: Row(3, -3) :: Nil)
+
+    checkAnswer(
+      Filter(InSubquery(x, Project(x :: Nil, ut1), false), Project(x :: z :: Nil, ut2)),
+      Row(4, -4) :: Nil)
+
+    checkAnswer(
+      Filter(
+        Exists(
+          Project(x :: Nil, Filter(EqualTo(ut1x, ut2x), ut1)), true),
+        Project(x :: z :: Nil, ut2)),
+      Row(1, -1) :: Row(2, -2) :: Row(3, -3) :: Nil)
+
+    checkAnswer(
+      Filter(
+        Exists(
+          Project(x :: Nil, Filter(EqualTo(ut1x, ut2x), ut1)), false),
+        Project(x :: z :: Nil, ut2)),
+      Row(4, -4) :: Nil)
+
+    dropTempTable("nt1")
+    dropTempTable("nt2")
   }
 }

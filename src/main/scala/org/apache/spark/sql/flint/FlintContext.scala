@@ -17,54 +17,59 @@
 package org.apache.spark.sql.flint
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.catalyst.analysis.{Analyzer, FunctionRegistry}
-import org.apache.spark.sql.catalyst.optimizer.{DefaultOptimizer, Optimizer}
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.analysis.{FlintAnalyzer, Analyzer, FunctionRegistry}
+import org.apache.spark.sql.catalyst.optimizer.{FlintDefaultOptimizer, Optimizer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.ExtractPythonUDFs
-import org.apache.spark.sql.execution.datasources.{PreInsertCastAndRename, PreWriteCheck}
+import org.apache.spark.sql.execution.datasources.{DataSourceStrategy, PreInsertCastAndRename, PreWriteCheck}
 import org.apache.spark.sql.flint.analyzer._
-import org.apache.spark.sql.hive.{HiveContext, ResolveHiveWindowFunction}
+import org.apache.spark.sql.hive.{FlintStrategies, HiveContext, ResolveHiveWindowFunction}
 
 import com.intel.ssg.bdt.spark.sql.CalciteDialect
 
-class FlintContext(sc: SparkContext) extends HiveContext(sc) with FlintContextTrait {
+class FlintContext(sc: SparkContext) extends HiveContext(sc) with FlintContextTrait
 
-}
+trait FlintContextTrait extends HiveContext {
+  self =>
 
-trait FlintContextTrait {
-  self: HiveContext =>
   // TODO: we need to check corresponding Spark version since we integrate with default analyzer
   // and optimizer.
   @transient
   override protected[sql] lazy val functionRegistry: FunctionRegistry = FunctionRegistry.builtin
 
-  /**
-   * Returns additional resolution rules for our context. Use def because we may switch dialects.
-   */
-  def flintExtendedRules: List[Rule[LogicalPlan]] =
-    if (conf.dialect == classOf[CalciteDialect].getCanonicalName) {
-      ResolveNaturalJoin :: Nil
-    } else Nil
-
   @transient
   /* An analyzer that uses the Hive metastore, with flint extensions */
   override protected[sql] lazy val analyzer: Analyzer =
-    new Analyzer(catalog, functionRegistry, conf) {
-      override val extendedResolutionRules =
-        catalog.ParquetConversions ::
-        catalog.CreateTables ::
-        catalog.PreInsertionCasts ::
-        ExtractPythonUDFs ::
-        ResolveHiveWindowFunction ::
-        PreInsertCastAndRename ::
-        flintExtendedRules
+    new FlintAnalyzer(catalog, functionRegistry, conf)
 
-      override val extendedCheckRules = Seq(
-        PreWriteCheck(catalog)
-      )
-    }
+  private val flintPlanner = new SparkPlanner with FlintStrategies {
+    val hiveContext = self
+
+    override def strategies: Seq[Strategy] = experimental.extraStrategies ++ Seq(
+      DataSourceStrategy,
+      HiveCommandStrategy(self),
+      HiveDDLStrategy,
+      DDLStrategy,
+      TakeOrderedAndProject,
+      InMemoryScans,
+      HiveTableScans,
+      DataSinks,
+      Scripts,
+      HashAggregation,
+      Aggregation,
+      FlintLeftSemiJoin,
+      EquiJoinSelection,
+      BasicOperators,
+      CartesianProduct,
+      BroadcastNestedLoopJoin
+    )
+  }
 
   @transient
-  override protected[sql] lazy val optimizer: Optimizer = DefaultOptimizer
+  override protected[sql] val planner = flintPlanner
+
+  @transient
+  override protected[sql] lazy val optimizer: Optimizer = FlintDefaultOptimizer
 }
