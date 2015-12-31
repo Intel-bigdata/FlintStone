@@ -335,8 +335,13 @@ class CalSqlWorker(sqlNode: SqlNode) {
         IsNull(nodeToExpr(basicCallNode.getOperandList.get(0)))
 
       case NOT =>
-        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
-        Not(nodeToExpr(basicCallNode.getOperandList.get(0)))
+        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall].getOperandList.get(0)
+        if (basicCallNode.getKind.name().equals(EXISTS)) {
+          val ExistsList = basicCallNode.asInstanceOf[SqlBasicCall].getOperandList
+          Exists(nodeToPlan(ExistsList.get(0)), false)
+        } else {
+          Not(nodeToExpr(basicCallNode))
+        }
 
       case CASE =>
         val caseNode = subSqlNode.asInstanceOf[SqlCase]
