@@ -71,6 +71,7 @@ package object sql {
   val OTHER_OR = "||"
   val LIKE = "LIKE"
   val IN = "IN"
+  val EXISTS = "EXISTS" // add exists
   val IS_NULL = "IS_NULL"
   val NOT = "NOT"
   val IS_NOT_NULL = "IS_NOT_NULL"
