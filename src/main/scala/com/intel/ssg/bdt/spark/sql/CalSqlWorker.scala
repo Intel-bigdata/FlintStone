@@ -278,17 +278,11 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
 
-        val likeExpr = basicCallNode.getOperandList.size match {
-          case 2 =>
-            // TODO use map here
-            Like(
-              nodeToExpr(basicCallNode.getOperandList.get(0)),
-              nodeToExpr(basicCallNode.getOperandList.get(1)))
-          case 3 =>
-            FlintLike(
-              nodeToExpr(basicCallNode.getOperandList.get(0)),
-              nodeToExpr(basicCallNode.getOperandList.get(1)),
-              nodeToExpr(basicCallNode.getOperandList.get(2)))
+        val likeExpr = basicCallNode.getOperandList match {
+          case List(op0: SqlNode, op1: SqlNode) =>
+            Like(nodeToExpr(op0), nodeToExpr(op1))
+          case List(op0: SqlNode, op1: SqlNode, op2: SqlNode) =>
+            FlintLike(nodeToExpr(op0), nodeToExpr(op1), nodeToExpr(op2))
           case _ => sys.error("unsupported like usage")
         }
         if (operator.getName.equals("LIKE")) likeExpr else Not(likeExpr)
@@ -393,6 +387,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val operand = basicCallNode.getOperandList
         val functionName = operator.getName
 
+        // TODO use some unapply to match functions
         if (functionName.equals(EXTRACT)) {
           val extraction = operand.get(0).asInstanceOf[SqlIntervalQualifier].timeUnitRange.name()
           val child = UnresolvedAttribute(operand.get(1).asInstanceOf[SqlIdentifier].names)
@@ -490,8 +485,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
       case SqlTypeName.CHAR =>
         Literal.create(literalNode.getStringValue, StringType)
-      //            case SqlTypeName.BINARY => {}
-      //            case SqlTypeName.TIME => {}
 
       case SqlTypeName.INTERVAL_YEAR_MONTH =>
         val year_or_month = literalNode.getValue.asInstanceOf[SqlIntervalLiteral.IntervalValue]
