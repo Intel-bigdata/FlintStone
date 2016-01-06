@@ -2950,6 +2950,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
   )
 
   override def createQueryTest(testCaseName: String, sql: String, reset: Boolean = true) {
+
     // testCaseName must not contain ':', which is not allowed to appear in a filename of Windows
     assert(!testCaseName.contains(":"))
 
