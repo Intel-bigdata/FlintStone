@@ -18,7 +18,7 @@
 package org.apache.spark.sql.catalyst.analysis
 
 import org.apache.spark.sql.AnalysisException
-import org.apache.spark.sql.flint.analyzer.ResolveNaturalJoin
+import org.apache.spark.sql.flint.analyzer.{FlintResolveOrderbyNumber, ResolveNaturalJoin}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -449,7 +449,7 @@ class FlintAnalyzer(
 
       // When resolve `SortOrder`s in Sort based on child, don't report errors as
       // we still have chance to resolve it based on grandchild
-      case s @ Sort(ordering, global, child) if child.resolved && !s.resolved =>
+      case s @ Sort(ordering, global, child) if child.resolved =>
         val newOrdering = resolveSortOrders(ordering, child, throws = false)
         Sort(newOrdering, global, child)
 
@@ -534,6 +534,8 @@ class FlintAnalyzer(
             plan.resolve(nameParts, resolver).getOrElse(u)
           case UnresolvedExtractValue(child, fieldName) if child.resolved =>
             ExtractValue(child, fieldName, resolver)
+          case IntegerLiteral(index) if plan.resolved =>
+            plan.output(index - 1)
         }
         newOrder.asInstanceOf[SortOrder]
       } catch {
