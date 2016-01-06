@@ -86,4 +86,3 @@ case class InSubquery(child: Expression, subquery: LogicalPlan, positive: Boolea
     s"NotInSubQuery($child, ${subquery.asCode})"
   }
 }
-
