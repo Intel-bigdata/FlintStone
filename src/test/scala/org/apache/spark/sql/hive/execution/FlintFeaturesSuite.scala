@@ -97,4 +97,22 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
     dropTempTable("nt1")
     dropTempTable("nt2")
   }
+
+  test("test attribute with full qualifiers: db.table.field") {
+    sql("create database db1")
+    sql("use db1")
+    sqlContext.read.json(
+      sparkContext.makeRDD("""{"a": {"b": 1}}""" :: Nil)).write.saveAsTable("db1.tmp")
+
+    sql("create database db2")
+    sql("use db2")
+    sqlContext.read.json(
+      sparkContext.makeRDD("""{"a": {"b": 2}}""" :: Nil)).write.saveAsTable("db2.tmp")
+
+    checkAnswer(sql("SELECT db1.tmp.a.b from db1.tmp"), Row(1) :: Nil)
+    checkAnswer(sql("SELECT db1.tmp.a.b, db2.tmp.a.b from db1.tmp, db2.tmp"), Row(1, 2) :: Nil)
+    checkAnswer(sql("SELECT tmp.a.b from db1.tmp"), Row(1) :: Nil)
+    checkAnswer(sql("SELECT a.b from db1.tmp"), Row(1) :: Nil)
+    checkAnswer(sql("SELECT a.b from tmp"), Row(2) :: Nil)
+  }
 }
