@@ -18,18 +18,24 @@
 package org.apache.spark.sql.catalyst.analysis
 
 import org.apache.spark.sql.AnalysisException
-import org.apache.spark.sql.flint.analyzer.ResolveNaturalJoin
-
-import scala.collection.mutable.ArrayBuffer
-
-import org.apache.spark.sql.catalyst.expressions.aggregate.{Complete, AggregateExpression2, AggregateFunction2}
-import org.apache.spark.sql.catalyst.plans.{LeftSemi, LeftAnti}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.catalyst.plans.{LeftAnti, LeftSemi}
 import org.apache.spark.sql.catalyst.rules._
-import org.apache.spark.sql.catalyst.trees.TreeNodeRef
-import org.apache.spark.sql.catalyst.{SimpleCatalystConf, CatalystConf}
+import org.apache.spark.sql.catalyst.{CatalystConf, SimpleCatalystConf}
+import org.apache.spark.sql.flint.analyzer.ResolveNaturalJoin
 import org.apache.spark.sql.types._
+
+/**
+  * Removes [[Subquery]] operators from the plan. Subqueries are only required to provide
+  * scoping information for attributes and can be removed once analysis is complete.
+  */
+object EliminateSubQueries extends Rule[LogicalPlan] {
+  def apply(plan: LogicalPlan): LogicalPlan = plan transform {
+    case Subquery(_, child) => child
+    case SubqueryWithDB(_, child, _) => child
+  }
+}
 
 /**
  * A trivial [[Analyzer]] with an [[EmptyCatalog]] and [[EmptyFunctionRegistry]]. Used for testing
@@ -449,7 +455,7 @@ class FlintAnalyzer(
 
       // When resolve `SortOrder`s in Sort based on child, don't report errors as
       // we still have chance to resolve it based on grandchild
-      case s @ Sort(ordering, global, child) if child.resolved && !s.resolved =>
+      case s @ Sort(ordering, global, child) if child.resolved =>
         val newOrdering = resolveSortOrders(ordering, child, throws = false)
         Sort(newOrdering, global, child)
 
@@ -534,6 +540,8 @@ class FlintAnalyzer(
             plan.resolve(nameParts, resolver).getOrElse(u)
           case UnresolvedExtractValue(child, fieldName) if child.resolved =>
             ExtractValue(child, fieldName, resolver)
+          case IntegerLiteral(index) if plan.resolved =>
+            plan.output(index - 1)
         }
         newOrder.asInstanceOf[SortOrder]
       } catch {
