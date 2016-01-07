@@ -20,14 +20,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.analysis.{FlintAnalyzer, Analyzer, FunctionRegistry}
 import org.apache.spark.sql.catalyst.optimizer.{FlintDefaultOptimizer, Optimizer}
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.rules.Rule
-import org.apache.spark.sql.execution.ExtractPythonUDFs
-import org.apache.spark.sql.execution.datasources.{DataSourceStrategy, PreInsertCastAndRename, PreWriteCheck}
-import org.apache.spark.sql.flint.analyzer._
-import org.apache.spark.sql.hive.{FlintStrategies, HiveContext, ResolveHiveWindowFunction}
-
-import com.intel.ssg.bdt.spark.sql.CalciteDialect
+import org.apache.spark.sql.execution.datasources.DataSourceStrategy
+import org.apache.spark.sql.hive.{FlintStrategies, HiveContext}
 
 class FlintContext(sc: SparkContext) extends HiveContext(sc) with FlintContextTrait
 
