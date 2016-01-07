@@ -16,7 +16,13 @@
  */
 package org.apache.spark.sql.hive.test
 
+import java.io.File
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.language.implicitConversions
+
+import org.apache.hadoop.hive.ql.exec.FunctionRegistry
 
 import org.apache.spark.sql.SQLConf
 import org.apache.spark.{SparkConf, SparkContext}
@@ -65,6 +71,69 @@ class TestFlintContext(sc: SparkContext) extends TestHiveContext(sc) with FlintC
       TestFlintContext.overrideConfs.map {
         case (key, value) => setConfString(key, value)
       }
+    }
+  }
+
+  private val loadedTables = new collection.mutable.HashSet[String]
+
+  override def loadTestTable(name: String) {
+    if (!(loadedTables contains name)) {
+      // Marks the table as loaded first to prevent infinite mutually recursive table loading.
+      loadedTables += name
+      logDebug(s"Loading test table $name")
+      val createCmds =
+        testTables.get(name).map(_.commands).getOrElse(sys.error(s"Unknown test table $name"))
+      createCmds.foreach(_())
+
+      if (cacheTables) {
+        cacheTable(name)
+      }
+    }
+  }
+
+  override def reset() {
+    try {
+      // HACK: Hive is too noisy by default.
+      org.apache.log4j.LogManager.getCurrentLoggers.asScala.foreach { log =>
+        val logger = log.asInstanceOf[org.apache.log4j.Logger]
+        if (!logger.getName.contains("org.apache.spark")) {
+          logger.setLevel(org.apache.log4j.Level.WARN)
+        }
+      }
+
+      cacheManager.clearCache()
+      loadedTables.clear()
+      catalog.cachedDataSourceTables.invalidateAll()
+      catalog.client.reset()
+      catalog.unregisterAllTables()
+
+      FunctionRegistry.getFunctionNames.asScala.filterNot(originalUDFs.contains(_)).
+        foreach { udfName => FunctionRegistry.unregisterTemporaryUDF(udfName) }
+
+      // Some tests corrupt this value on purpose, which breaks the RESET call below.
+      hiveconf.set("fs.default.name", new File(".").toURI.toString)
+      // It is important that we RESET first as broken hooks that might have been set could break
+      // other sql exec here.
+      executionHive.runSqlHive("RESET")
+      metadataHive.runSqlHive("RESET")
+      // For some reason, RESET does not reset the following variables...
+      // https://issues.apache.org/jira/browse/HIVE-9004
+      runSqlHive("set hive.table.parameters.default=")
+      runSqlHive("set datanucleus.cache.collections=true")
+      runSqlHive("set datanucleus.cache.collections.lazy=true")
+      // Lots of tests fail if we do not change the partition whitelist from the default.
+      runSqlHive("set hive.metastore.partition.name.whitelist.pattern=.*")
+
+      configure().foreach {
+        case (k, v) =>
+          metadataHive.runSqlHive(s"SET $k=$v")
+      }
+      defaultOverrides()
+
+      runSqlHive("USE default")
+    } catch {
+      case e: Exception =>
+        logError("FATAL ERROR: Failed to reset TestDB state.", e)
     }
   }
 }
