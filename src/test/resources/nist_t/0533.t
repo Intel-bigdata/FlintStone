@@ -1,2 +1,0 @@
-| 12 | SULLIVAN1 | 
-| 100 | SULLIVAN1 | 

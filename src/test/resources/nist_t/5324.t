@@ -1,4 +1,0 @@
-| NULL | 
-| Seoul           | 
-| NULL | 
-| Toyko           | 

@@ -1,1 +1,0 @@
-| This test is trying to test the limit on the total length of an index                                          | 

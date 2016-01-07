@@ -293,8 +293,15 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
         val leftNode = basicCallNode.getOperandList.get(0)
 
-        if (basicCallNode.getOperandList.get(1).getKind.name().equals(SELECT)){
-          sys.error("TODO")
+        if (basicCallNode.getOperandList.get(1).getKind.name().equals(SELECT)) {
+          if (operator.getName.equals("IN")){
+            InSubquery(nodeToExpr(basicCallNode.getOperandList.get(0)),
+                       nodeToPlan(basicCallNode.getOperandList.get(1)), true)
+          }
+          else {
+            InSubquery(nodeToExpr(basicCallNode.getOperandList.get(0)),
+                       nodeToPlan(basicCallNode.getOperandList.get(1)), false)
+          }
         } else {
           val rightNodeList = basicCallNode.getOperandList.get(1).asInstanceOf[SqlNodeList]
           // must be a list
@@ -302,6 +309,15 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
           val inExpr = In(nodeToExpr(leftNode), rightSeq.toSeq)
           if (operator.getName.equals("IN")) inExpr else Not(inExpr)
+        }
+
+      case EXISTS =>
+        val ExistsList = subSqlNode.asInstanceOf[SqlBasicCall].getOperandList
+        if (ExistsList.size() == 1 && ExistsList.get(0).getKind.name().equals(SELECT)) {
+          Exists(nodeToPlan(ExistsList.get(0)), true)
+        }
+        else {
+          sys.error("unsupport exists usage")
         }
 
       case IS_NOT_NULL =>
@@ -313,8 +329,13 @@ class CalSqlWorker(sqlNode: SqlNode) {
         IsNull(nodeToExpr(basicCallNode.getOperandList.get(0)))
 
       case NOT =>
-        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
-        Not(nodeToExpr(basicCallNode.getOperandList.get(0)))
+        val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall].getOperandList.get(0)
+        if (basicCallNode.getKind.name().equals(EXISTS)) {
+          val ExistsList = basicCallNode.asInstanceOf[SqlBasicCall].getOperandList
+          Exists(nodeToPlan(ExistsList.get(0)), false)
+        } else {
+          Not(nodeToExpr(basicCallNode))
+        }
 
       case CASE =>
         val caseNode = subSqlNode.asInstanceOf[SqlCase]

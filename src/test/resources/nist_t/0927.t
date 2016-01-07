@@ -1,1 +1,0 @@
-| th | seco | third3 | fourth_4 | fifth_colu | sixth_column | seventh_column | last_column_of_t | 

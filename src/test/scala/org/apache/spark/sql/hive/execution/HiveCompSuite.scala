@@ -49,8 +49,16 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     //"0813", "0816"
     //retest natural join
     //"0749", "0750", "0751", "0754", "0755", "0759", "0760", "0894"
+    //retest for in subquery
+    //unpassed
+    //"0145", "0147", "0157", "0198", "0274", "0346"
+    "0079", "0142", "0144", "0146", "0167", "0194",
+    "0195", "0196", "0302", "0303", "0319",
+    "0332", "0333", "0939",
+    //retest for exists subquery
+    "0095", "0304", "0305", "0322", "0323", "0324"
     //for nist
-    "0000"/*,
+    /*"0000",
     "0001",
     "0002",
     "0003",
@@ -2944,6 +2952,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
   )
 
   override def createQueryTest(testCaseName: String, sql: String, reset: Boolean = true) {
+
     // testCaseName must not contain ':', which is not allowed to appear in a filename of Windows
     assert(!testCaseName.contains(":"))
 

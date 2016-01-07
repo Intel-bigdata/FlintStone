@@ -3,5 +3,4 @@
 *.iml
 target
 derby.log
-test*
 retest*

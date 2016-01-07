@@ -1,4 +1,0 @@
-| E13 | gg | 
-| e1 | NULL | 
-| e1 | Gaithersburg | 
-| e1 | Vienna | 

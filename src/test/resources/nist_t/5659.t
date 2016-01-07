@@ -1,3 +1,0 @@
-| Deale           | 
-| Deale           | 
-| NULL | 
