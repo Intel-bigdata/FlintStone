@@ -1,1 +1,0 @@
-select add_months('2015-02-03', 2.4);

@@ -1,1 +1,0 @@
-select last_day(1423199465);

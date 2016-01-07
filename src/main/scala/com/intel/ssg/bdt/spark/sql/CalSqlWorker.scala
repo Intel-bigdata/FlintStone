@@ -278,11 +278,17 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val basicCallNode = subSqlNode.asInstanceOf[SqlBasicCall]
         val operator = basicCallNode.getOperator
 
-        val likeExpr = basicCallNode.getOperandList match {
-          case List(op0: SqlNode, op1: SqlNode) =>
-            Like(nodeToExpr(op0), nodeToExpr(op1))
-          case List(op0: SqlNode, op1: SqlNode, op2: SqlNode) =>
-            FlintLike(nodeToExpr(op0), nodeToExpr(op1), nodeToExpr(op2))
+        val likeExpr = basicCallNode.getOperandList.size match {
+          case 2 =>
+            // TODO use map here
+            Like(
+              nodeToExpr(basicCallNode.getOperandList.get(0)),
+              nodeToExpr(basicCallNode.getOperandList.get(1)))
+          case 3 =>
+            FlintLike(
+              nodeToExpr(basicCallNode.getOperandList.get(0)),
+              nodeToExpr(basicCallNode.getOperandList.get(1)),
+              nodeToExpr(basicCallNode.getOperandList.get(2)))
           case _ => sys.error("unsupported like usage")
         }
         if (operator.getName.equals("LIKE")) likeExpr else Not(likeExpr)
