@@ -1,1 +1,0 @@
-SELECT TRUNC(1.0, 'MM');

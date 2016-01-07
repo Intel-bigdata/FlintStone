@@ -1,1 +1,0 @@
-select last_day(map('2014-01-14','test'));
