@@ -27,6 +27,17 @@ import org.apache.spark.sql.flint.analyzer.ResolveNaturalJoin
 import org.apache.spark.sql.types._
 
 /**
+  * Removes [[Subquery]] operators from the plan. Subqueries are only required to provide
+  * scoping information for attributes and can be removed once analysis is complete.
+  */
+object EliminateSubQueries extends Rule[LogicalPlan] {
+  def apply(plan: LogicalPlan): LogicalPlan = plan transform {
+    case Subquery(_, child) => child
+    case SubqueryWithDB(_, child, _) => child
+  }
+}
+
+/**
  * A trivial [[Analyzer]] with an [[EmptyCatalog]] and [[EmptyFunctionRegistry]]. Used for testing
  * when all relations are already filled in and the analyzer needs only to resolve attribute
  * references.

@@ -21,7 +21,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.types._
 
-case class Subquery(alias: String, child: LogicalPlan, databaseName: Option[String] = None)
+case class SubqueryWithDB(alias: String, child: LogicalPlan, databaseName: Option[String] = None)
   extends UnaryNode {
   def this(alias: String, child: LogicalPlan) = this(alias, child, None)
   override def output: Seq[Attribute] = child.output.map(
