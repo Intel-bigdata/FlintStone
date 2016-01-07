@@ -289,6 +289,8 @@ class CalSqlWorker(sqlNode: SqlNode) {
               nodeToExpr(basicCallNode.getOperandList.get(0)),
               nodeToExpr(basicCallNode.getOperandList.get(1)),
               nodeToExpr(basicCallNode.getOperandList.get(2)))
+          case _ => sys.error("unsupported like usage")
+        }
         if (operator.getName.equals("LIKE")) likeExpr else Not(likeExpr)
 
       case IN =>
