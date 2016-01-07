@@ -1,4 +1,0 @@
-| Deale           | 
-| Deale           | 
-| Toyko           | 
-| Toyko           | 

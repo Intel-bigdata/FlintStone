@@ -1,4 +1,0 @@
-| Seoul           | 
-| Vienna          | 
-| Toyko           | 
-| Deale           | 

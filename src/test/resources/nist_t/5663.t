@@ -1,3 +1,0 @@
-| Vienna          | 
-| Akron           | 
-| Toyko           | 

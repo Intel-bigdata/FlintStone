@@ -1,9 +1,0 @@
-| E2  | Betty                | 10 | Vienna          | E2  | P1  | 40 | 
-| E2  | Betty                | 10 | Vienna          | E2  | P2  | 80 | 
-| E3  | Carmen               | 13 | Vienna          | E3  | P2  | 20 | 
-| E2  | Betty                | 10 | Vienna          | E2  | P1  | 40 | 
-| E2  | Betty                | 10 | Vienna          | E2  | P2  | 80 | 
-| E3  | Carmen               | 13 | Vienna          | E3  | P2  | 20 | 
-| E2  | Betty                | 10 | Vienna          | E2  | P1  | 40 | 
-| E2  | Betty                | 10 | Vienna          | E2  | P2  | 80 | 
-| E3  | Carmen               | 13 | Vienna          | E3  | P2  | 20 | 

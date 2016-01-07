@@ -1,2 +1,0 @@
-| Havana          | Fidel                | NULL | NULL | 
-| gg              | ff                   | NULL | NULL | 

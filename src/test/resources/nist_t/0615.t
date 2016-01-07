@@ -1,1 +1,0 @@
-| No nickname given    | basic | 

@@ -1,9 +1,0 @@
-| Deale           | 
-| Vienna          | 
-| Vienna          | 
-| Deale           | 
-| Akron           | 
-| NULL | 
-| NULL | 
-| Toyko           | 
-| Seoul           | 
