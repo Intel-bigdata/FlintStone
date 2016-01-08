@@ -110,11 +110,11 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "0889",
     "0890",
     "1032",
-    "1034"
+    "1034",
     // order by results diff
     "0930",
     "0932",
-    "0934",
+    "0934"
   )
 
   /**
@@ -122,6 +122,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
    * blacklist are implicitly marked as ignored.
    */
   override def whiteList = Seq(
+    "0912"
     //for nist
     /*"0000",
     "0001",
