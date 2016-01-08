@@ -118,9 +118,12 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
 
   test("order by number") {
     val nt1 = sparkContext.parallelize(Seq((1, 3), (1, 2), (1, 1), (2, 2), (4, 4))).toDF("a", "b")
-    nt1.registerTempTable("nt1")
-      checkAnswer(
-        sql("SELECT a, b FROM nt1 ORDER BY 1 DESC, b ASC"),
-        Seq(Row(4, 4), Row(2, 2), Row(1, 1), Row(1, 2), Row(1, 3)))
+    nt1.registerTempTable("t1")
+    checkAnswer(
+      sql("SELECT * FROM t1 ORDER BY 1 DESC, b ASC"),
+      Seq(Row(4, 4), Row(2, 2), Row(1, 1), Row(1, 2), Row(1, 3)))
+    checkAnswer(
+      sql("SELECT * FROM t1 ORDER BY 2 DESC, 1 ASC"),
+      Seq(Row(4, 4), Row(1, 3), Row(1, 2), Row(2, 2), Row(1, 1)))
   }
 }
