@@ -677,11 +677,17 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
   def  dealWithOrderByNode(sqlnode: SqlOrderBy) : LogicalPlan = {
     // especially fetch to get limit
-    val query = sqlnode.query.asInstanceOf[SqlSelect]
-    val selectList = query.getSelectList
-    val orderList = sqlnode.orderList
 
-    val withHaving = prepareSelect(query)
+    val orderByQuery = sqlnode.query
+
+    val withHaving =
+      if (orderByQuery.getKind.name().equals(SELECT)) {
+        prepareSelect(orderByQuery.asInstanceOf[SqlSelect])
+      } else {
+        nodeToPlan(orderByQuery)
+      }
+
+    val orderList = sqlnode.orderList
 
     val orderSeq = ListBuffer[SortOrder]()
     for (ele <- orderList) {
