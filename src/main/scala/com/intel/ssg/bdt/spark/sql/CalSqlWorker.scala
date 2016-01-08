@@ -692,13 +692,8 @@ class CalSqlWorker(sqlNode: SqlNode) {
           if (operand.isInstanceOf[SqlIdentifier]) {
             orderSeq += SortOrder(nodeToExpr(operand), Descending)
           } else {
-            val index = operand.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
-            // if ident and else expr
-            orderSeq += {selectList.get(index).getKind.name() match {
-              case IDENTIFIER => SortOrder(nodeToExpr(selectList.get(index)), Descending)
-              case OTHER_FUNCTION => SortOrder(UnresolvedAttribute(s"c$index"), Descending)
-              case _ => SortOrder(UnresolvedAttribute(s"_c$index"), Descending)
-            }}
+            val index = operand.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue()
+            orderSeq += SortOrder(Literal(index), Descending)
           }
 
         case IDENTIFIER =>
@@ -706,13 +701,9 @@ class CalSqlWorker(sqlNode: SqlNode) {
           orderSeq += SortOrder(nodeToExpr(ele), Ascending)
 
         case LITERAL =>
-          val index = ele.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue() - 1
+          val index = ele.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue()
           // if ident and else expr
-          orderSeq += {selectList.get(index).getKind.name() match {
-            case IDENTIFIER => SortOrder(nodeToExpr(selectList.get(index)), Ascending)
-            case OTHER_FUNCTION => SortOrder(UnresolvedAttribute(s"c$index"), Ascending)
-            case _ => SortOrder(UnresolvedAttribute(s"_c$index"), Ascending)
-          }}
+          orderSeq += SortOrder(Literal(index), Ascending)
 
         case _ =>
           sys.error("order by error. pls check.")
