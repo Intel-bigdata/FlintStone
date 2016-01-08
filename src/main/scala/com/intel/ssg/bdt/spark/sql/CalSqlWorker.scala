@@ -693,7 +693,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
             orderSeq += SortOrder(nodeToExpr(operand), Descending)
           } else {
             val index = operand.asInstanceOf[SqlNumericLiteral].bigDecimalValue().intValue()
-            orderSeq += SortOrder(Literal(index), Ascending)
+            orderSeq += SortOrder(Literal(index), Descending)
           }
 
         case IDENTIFIER =>
