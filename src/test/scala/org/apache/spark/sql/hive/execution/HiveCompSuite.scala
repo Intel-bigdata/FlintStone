@@ -124,7 +124,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
   override def whiteList = Seq(
     "0912"
     //for nist
-    /*"0000",
+    "0000",
     "0001",
     "0002",
     "0003",
@@ -1070,7 +1070,7 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "1036",
     "1037",
     "1038",
-    "1039"*/
+    "1039"
 //    // tpc-h
 //    "1051",
 //    "1052",
