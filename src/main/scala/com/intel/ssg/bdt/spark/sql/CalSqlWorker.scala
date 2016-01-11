@@ -625,9 +625,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
           val elename = ele.asInstanceOf[SqlIdentifier].names.get(0)
           val leftname = left.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
           val rightname = right.asInstanceOf[SqlIdentifier].names.toList ++ List(elename)
-          // scalastyle:off println
-          println(leftname, rightname)
-          // scalastyle:on println
           // first each make an equal
           val equalExpr = EqualTo(UnresolvedAttribute(leftname), UnresolvedAttribute(rightname))
           // add expr to buf
@@ -668,9 +665,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
       And(exprList.get(0), exprList.get(1))
     } else {
       val first = exprList.remove(0)
-      // scalastyle:off println
-      println(exprList)
-      // scalastyle:on println
       And(first, combineAdd(exprList))
     }
   }
