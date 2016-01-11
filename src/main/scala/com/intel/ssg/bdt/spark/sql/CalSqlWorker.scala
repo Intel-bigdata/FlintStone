@@ -122,7 +122,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
           nodeToPlan(subSelectNode), overwrite = false, ifNotExists = false)
 
       case _ =>
-        sys.error("TODO")
+        sys.error("Unsupported Syntax.")
     }
   }
 
@@ -271,7 +271,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val rightNode = basicCallNode.getOperandList.get(1)
         operator.getName match {
           case OTHER_OR => ConcatWs(Literal("") +: basicCallNode.getOperandList.map(nodeToExpr))
-          case _ => sys.error("not support now.")
+          case _ => sys.error("Not Support Syntax Now.")
         }
 
       case LIKE =>
@@ -280,7 +280,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
 
         val likeExpr = basicCallNode.getOperandList.size match {
           case 2 =>
-            // TODO use map here
             Like(
               nodeToExpr(basicCallNode.getOperandList.get(0)),
               nodeToExpr(basicCallNode.getOperandList.get(1)))
@@ -390,7 +389,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
             case BOOL => BooleanType
             case BINARY => BinaryType
             case _ =>
-              sys.error("TODO, other datatype may not be valided for calcite or spark now.")
+              sys.error("Using Datatype May Not Be Valided For Calcite Or Spark Now.")
           }
 
         Cast(nodeToExpr(left), datatype)
@@ -414,7 +413,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
         val operand = basicCallNode.getOperandList
         val functionName = operator.getName
 
-        // TODO use some unapply to match functions
         if (functionName.equals(EXTRACT)) {
           val extraction = operand.get(0).asInstanceOf[SqlIntervalQualifier].timeUnitRange.name()
           val child = UnresolvedAttribute(operand.get(1).asInstanceOf[SqlIdentifier].names)
@@ -465,11 +463,6 @@ class CalSqlWorker(sqlNode: SqlNode) {
         } else {
           if (identiNode.isSimple) {
             UnresolvedAttribute.quoted(identiNode.getSimple)
-            // } else if (identiNode.names.size() == 2) {
-            //   UnresolvedExtractValue(
-            //     UnresolvedAttribute.quoted(identiNode.names.get(0)),
-            //     Literal(identiNode.names.get(1)))
-            //   UnresolvedAttribute(identiNode.names.mkString("."))
           } else {
             UnresolvedAttribute(identiNode.names.mkString("."))
           }
@@ -546,7 +539,7 @@ class CalSqlWorker(sqlNode: SqlNode) {
         Literal.create(Timestamp.valueOf(timestampparam), TimestampType)
 
       case _ =>
-        sys.error("TODO")
+        sys.error("Using Datatype May Not Be Valided For Calcite Or Spark Now.")
     }
   } // ok
 

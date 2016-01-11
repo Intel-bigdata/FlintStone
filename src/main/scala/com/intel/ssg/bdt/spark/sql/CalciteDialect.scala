@@ -47,22 +47,16 @@ class CalciteDialect extends ParserDialect with Logging {
     if (tree.isEmpty) {
       val hlp = hqlParser.parse(sqlText)
       if (!hlp.isInstanceOf[Command]) {
-        // scalastyle:off println
-        println(sqlText + "failed.")
-        // scalastyle:on println
+        log.warn(sqlText + "failed.")
       }
       Some(hlp)
     } else {
-      // scalastyle:off println
-      println("Calcite parsing passed, start to transform. " + sqlText)
-      // scalastyle:on println
+      log.info("Calcite parsing passed, start to transform. " + sqlText)
       val worker = new CalSqlWorker(tree.get)
       val result = Try(Some(worker.getLogicalPlan)).getOrElse(None)
 
       if (result.isEmpty) {
-        // scalastyle:off println
-        println("calcite cannot do " + sqlText)
-        // scalastyle:on println
+        log.warn("calcite cannot do " + sqlText)
       }
       result
     }
