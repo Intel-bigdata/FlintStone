@@ -20,8 +20,8 @@
   <version>1.0</version>
   <packaging>jar</packaging>
 
-  <name>Calcite parser for SparkSQL</name>
-  <url></url>
+  <name>FlintStone</name>
+  <url>https://github.com/Intel-bigdata/spark-calcite-parser</url>
 
   <developers>
     <developer>
