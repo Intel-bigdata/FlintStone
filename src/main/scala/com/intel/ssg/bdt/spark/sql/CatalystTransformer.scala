@@ -34,7 +34,7 @@ private[sql] object CatalystTransformer extends Logging {
   def transformSelectList(sl: SqlNodeList): Seq[NamedExpression] = {
     sl.getList.toArray.toSeq.asInstanceOf[Seq[SqlNode]].map {
       case si: SqlIdentifier => UnresolvedAttribute(si.toString)
-      case _ => sys.error("Unsupported Select Syntax".)
+      case _ => sys.error("Unsupported Select Syntax.")
     }
   }
 
