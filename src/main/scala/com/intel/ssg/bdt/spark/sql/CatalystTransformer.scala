@@ -28,13 +28,13 @@ private[sql] object CatalystTransformer extends Logging {
       val from = nodeToRelation(ss.getFrom)
       Project(transformSelectList(ss.getSelectList), from)
     case _ =>
-      sys.error("unsupported nodes")
+      sys.error("Unsupported Nodes.")
   }
 
   def transformSelectList(sl: SqlNodeList): Seq[NamedExpression] = {
     sl.getList.toArray.toSeq.asInstanceOf[Seq[SqlNode]].map {
       case si: SqlIdentifier => UnresolvedAttribute(si.toString)
-      case _ => sys.error("TODO")
+      case _ => sys.error("Unsupported Select Syntax.")
     }
   }
 
@@ -42,6 +42,6 @@ private[sql] object CatalystTransformer extends Logging {
     case relation: SqlIdentifier =>
       UnresolvedRelation(relation.names.toArray.toSeq.asInstanceOf[Seq[String]], None)
     case _ =>
-      sys.error("TODO")
+      sys.error("Unsupported Relations.")
   }
 }
