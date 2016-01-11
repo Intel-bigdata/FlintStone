@@ -16,8 +16,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.intel.ssg.bdt</groupId>
-  <artifactId>spark-calcite-parser</artifactId>
-  <version>0.1.0-calciteParser-SNAPSHOT</version>
+  <artifactId>flintstone</artifactId>
+  <version>1.0</version>
   <packaging>jar</packaging>
 
   <name>Calcite parser for SparkSQL</name>
@@ -31,6 +31,10 @@
       <email>daoyuan.wang@intel.com</email>
     </developer>
     <developer>
+      <id>happycherry</id>
+      <name>Chao Zhang</name>
+      <url>http://github.com/happycherry</url>
+      <email>chao.c.zhang@intel.com</email>
     </developer>
   </developers>
 
@@ -41,19 +45,6 @@
     </license>
   </licenses>
 
-<distributionManagement>
-  <snapshotRepository>
-     <id>snapshots</id>
-     <name>Apache Snapshots</name>
-     <url>http://10.0.0.174:8080/nexus/content/repositories/snapshots</url>
-  </snapshotRepository>
-  <repository>
-     <id>central</id>
-     <name>Central</name>
-     <url>http://10.0.0.174:8080/nexus/content/repositories/central</url>
-  </repository>
-</distributionManagement>
-
   <properties>
     <!-- Build Properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,7 +52,6 @@
     <basedir>./</basedir>
     <scala.version>2.10.4</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
-    <!--<spark.internal.version>temp_version-SNAPSHOT</spark.internal.version>-->
     <spark.version>1.5.2</spark.version>
     <spark.internal.version>1.5.2</spark.internal.version>
   </properties>
