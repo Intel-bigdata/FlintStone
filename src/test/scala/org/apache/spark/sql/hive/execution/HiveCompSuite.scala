@@ -130,6 +130,8 @@ class HiveCompSuite extends HiveCompatibilitySuite {
     "1032",
     "1034",
     // order by results diff
+    "0092",
+    "0279",
     "0930",
     "0932",
     "0934"
