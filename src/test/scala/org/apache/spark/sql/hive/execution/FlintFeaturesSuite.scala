@@ -98,7 +98,7 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
     dropTempTable("nt2")
   }
 
-  test("test attribute with full qualifiers: db.table.field") {
+  ignore("test attribute with full qualifiers: db.table.field") {
     sql("create database db1")
     sql("use db1")
     sqlContext.read.json(

@@ -32,12 +32,11 @@ class CalciteDialect extends ParserDialect with Logging {
         sys.error("Parse failed.")
       } else {
         log.info("Using origin parser.")
-        sqlParser.parse(sqlText)
+        hqlParser.parse(sqlText)
       }
     })
   }
 
-  @transient protected val sqlParser = SqlParser
   @transient protected val hqlParser = new HiveQlDialectParser
 
   def getLogicalPlan(sqlText: String): Option[LogicalPlan] = {
@@ -56,7 +55,7 @@ class CalciteDialect extends ParserDialect with Logging {
       val result = Try(Some(worker.getLogicalPlan)).getOrElse(None)
 
       if (result.isEmpty) {
-        log.warn("calcite cannot do " + sqlText)
+        log.warn("FlintStone cannot transform " + sqlText)
       }
       result
     }
