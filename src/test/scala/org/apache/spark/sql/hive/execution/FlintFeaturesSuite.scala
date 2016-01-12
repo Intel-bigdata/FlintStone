@@ -98,7 +98,7 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
     dropTempTable("nt2")
   }
 
-  test("test attribute with full qualifiers: db.table.field") {
+  ignore("test attribute with full qualifiers: db.table.field") {
     sql("create database db1")
     sql("use db1")
     sqlContext.read.json(
@@ -116,7 +116,7 @@ class FlintFeaturesSuite extends QueryTest with SQLTestUtils {
     checkAnswer(sql("SELECT a.b from tmp"), Row(2) :: Nil)
   }
 
-  ignore("order by number") {
+  test("order by number") {
     val nt1 = sparkContext.parallelize(Seq((1, 3), (1, 2), (1, 1), (2, 2), (4, 4))).toDF("a", "b")
     nt1.registerTempTable("t1")
     checkAnswer(

@@ -18,10 +18,10 @@ package org.apache.spark.sql.flint
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.analysis.{OverrideCatalog, FlintAnalyzer, Analyzer, FunctionRegistry}
+import org.apache.spark.sql.catalyst.analysis.{FlintAnalyzer, Analyzer, FunctionRegistry}
 import org.apache.spark.sql.catalyst.optimizer.{FlintDefaultOptimizer, Optimizer}
 import org.apache.spark.sql.execution.datasources.DataSourceStrategy
-import org.apache.spark.sql.hive.{FlintMetastoreCatalog, FlintStrategies, HiveContext}
+import org.apache.spark.sql.hive.{FlintStrategies, HiveContext}
 
 class FlintContext(sc: SparkContext) extends HiveContext(sc) with FlintContextTrait
 
@@ -37,10 +37,6 @@ trait FlintContextTrait extends HiveContext {
   /* An analyzer that uses the Hive metastore, with flint extensions */
   override protected[sql] lazy val analyzer: Analyzer =
     new FlintAnalyzer(catalog, functionRegistry, conf)
-
-  @transient
-  override protected[sql] lazy val catalog =
-    new FlintMetastoreCatalog(metadataHive, this) with OverrideCatalog
 
   @transient
   private val flintPlanner = new SparkPlanner with FlintStrategies {
