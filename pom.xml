@@ -21,7 +21,7 @@
   <packaging>jar</packaging>
 
   <name>FlintStone</name>
-  <url>https://github.com/Intel-bigdata/spark-calcite-parser</url>
+  <url>https://github.com/Intel-bigdata/FlintStone</url>
 
   <developers>
     <developer>
